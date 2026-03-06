@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NutriCoach — Acceder</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── CONFIG ── */
+/* ⚠️  IMPORTANTE: Reemplaza con tus credenciales de Supabase */
+/*    SUPABASE_URL  → https://xxxxxxxxxxx.supabase.co         */
+/*    SUPABASE_ANON → eyJhbGciOiJ...                          */
+
+:root{
+  --bg:#08090a;--surface:#0f1011;--card:#161819;--border:#1e2122;
+  --accent:#c2f24f;--accent2:#4ff2c2;--accent3:#f2d24f;
+  --red:#f25050;--text:#e8ede8;--muted:#4a544a;--muted2:#7a887a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:20px;padding-bottom:env(safe-area-inset-bottom,0px);
+  overflow:hidden;
+}
+
+/* Background grid */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:40px 40px;
+  opacity:.35;pointer-events:none;
+}
+/* Glow */
+body::after{
+  content:'';position:fixed;
+  width:600px;height:600px;
+  background:radial-gradient(circle, rgba(194,242,79,.05) 0%, transparent 70%);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+
+.login-wrap{
+  position:relative;z-index:1;
+  display:grid;grid-template-columns:1fr 1fr;
+  max-width:860px;width:100%;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+}
+@media(max-width:640px){.login-wrap{grid-template-columns:1fr}}
+
+/* Left: Branding */
+.brand-panel{
+  background:linear-gradient(135deg,#0d1208 0%,#111a08 60%,#0a1410 100%);
+  padding:48px 40px;display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+@media(max-width:640px){.brand-panel{display:none}}
+.brand-panel::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:300px;height:300px;
+  background:radial-gradient(circle,rgba(194,242,79,.08) 0%,transparent 70%);
+}
+.brand-mark{
+  width:50px;height:50px;background:var(--accent);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#08090a;
+  margin-bottom:24px;flex-shrink:0;
+}
+.brand-title{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:32px;
+  line-height:1.1;color:var(--text);margin-bottom:12px;
+}
+.brand-sub{color:var(--muted2);font-size:13px;line-height:1.7;margin-bottom:32px}
+.feature-list{display:flex;flex-direction:column;gap:10px;margin-top:auto}
+.feat{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted2)}
+.feat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.feat.active .feat-dot{background:var(--accent)}
+.feat span{color:var(--text)}
+
+/* Right: Form */
+.form-panel{padding:48px 40px;display:flex;flex-direction:column;justify-content:center}
+@media(max-width:480px){.form-panel{padding:32px 24px}}
+
+.form-logo{
+  display:none;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:24px;
+  color:var(--accent);margin-bottom:28px;
+}
+@media(max-width:640px){.form-logo{display:block}}
+
+.form-tabs{display:flex;gap:2px;background:var(--card);border-radius:8px;padding:3px;margin-bottom:28px}
+.form-tab{
+  flex:1;padding:8px;background:none;border:none;color:var(--muted2);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:11px;
+  cursor:pointer;border-radius:6px;transition:all .2s;
+}
+.form-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+.form-title{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:22px;
+  margin-bottom:6px;color:var(--text);
+}
+.form-desc{font-size:11px;color:var(--muted2);margin-bottom:24px;line-height:1.6}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);margin-bottom:6px}
+.field input,
+.field select{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  color:var(--text);padding:12px 14px;border-radius:8px;
+  font-family:'JetBrains Mono',monospace;font-size:14px;outline:none;
+  transition:border-color .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field select{cursor:pointer}
+option{background:var(--card)}
+
+.role-select{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;
+}
+.role-opt{
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:12px;cursor:pointer;transition:all .2s;text-align:center;
+}
+.role-opt.active{border-color:var(--accent);background:rgba(194,242,79,.06)}
+.role-opt .ri{font-size:22px;display:block;margin-bottom:4px}
+.role-opt .rn{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:var(--muted2)}
+.role-opt.active .rn{color:var(--accent)}
+
+.submit-btn{
+  width:100%;background:var(--accent);color:#08090a;border:none;
+  padding:14px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:800;
+  font-size:13px;cursor:pointer;transition:all .2s;margin-top:4px;
+  letter-spacing:.5px;
+}
+.submit-btn:hover{opacity:.88}
+.submit-btn:active{transform:scale(.98)}
+.submit-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.err-msg{
+  background:rgba(242,80,80,.1);border:1px solid rgba(242,80,80,.25);
+  border-radius:6px;padding:9px 12px;font-size:11px;color:#f87070;
+  margin-bottom:12px;display:none;
+}
+.err-msg.show{display:block}
+
+.ok-msg{
+  background:rgba(194,242,79,.08);border:1px solid rgba(194,242,79,.2);
+  border-radius:6px;padding:9px 12px;font-size:11px;color:var(--accent);
+  margin-bottom:12px;display:none;
+}
+.ok-msg.show{display:block}
+
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.divider span{font-size:10px;color:var(--muted)}
+
+/* Spinner */
+.spinner{display:none;width:16px;height:16px;border:2px solid rgba(8,9,10,.3);border-top-color:#08090a;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Connecting state */
+.loading-overlay{
+  position:fixed;inset:0;background:var(--bg);z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  font-family:'Syne',sans-serif;font-size:14px;color:var(--muted2);
+}
+.loading-mark{
+  width:48px;height:48px;background:var(--accent);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:20px;color:#08090a;
+  animation:pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay (while checking session) -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-mark">NC</div>
+  <span>Comprobando sesión...</span>
+</div>
+
+<div class="login-wrap" id="login-wrap" style="display:none">
+  <!-- LEFT: Branding -->
+  <div class="brand-panel">
+    <div class="brand-mark">NC</div>
+    <div class="brand-title">Nutre.<br>Entrena.<br>Progresa.</div>
+    <div class="brand-sub">Plataforma de coaching nutricional y de entrenamiento. Planes personalizados, seguimiento de progresión y comunicación directa entre entrenador y cliente.</div>
+    <div class="feature-list">
+      <div class="feat active"><div class="feat-dot"></div><span>Planes de dieta editables por el entrenador</span></div>
+      <div class="feat active"><div class="feat-dot"></div><span>Registro de entreno con progresión de pesos</span></div>
+      <div class="feat active"><div class="feat-dot"></div><span>GIFs demostrativos de ejercicios</span></div>
+      <div class="feat active"><div class="feat-dot"></div><span>Precios de supermercado actualizados con IA</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Form -->
+  <div class="form-panel">
+    <div class="form-logo">NutriCoach</div>
+
+    <div class="form-tabs">
+      <button class="form-tab active" id="tab-login" onclick="switchTab('login')">Iniciar sesión</button>
+      <button class="form-tab" id="tab-register" onclick="switchTab('register')">Registrarse</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div class="form-title">Bienvenido</div>
+      <div class="form-desc">Introduce tus credenciales para acceder a tu panel.</div>
+      <div class="err-msg" id="login-err"></div>
+      <div class="ok-msg"  id="login-ok"></div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="submit-btn" id="login-btn" onclick="doLogin()">
+        <span id="login-txt">Acceder</span>
+        <div class="spinner" id="login-spin"></div>
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="form-register" style="display:none">
+      <div class="form-title">Crear cuenta</div>
+      <div class="form-desc">Elige tu rol antes de registrarte.</div>
+      <div class="err-msg" id="reg-err"></div>
+      <div class="ok-msg"  id="reg-ok"></div>
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="reg-name" placeholder="Nombre Apellido">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Contraseña (mínimo 8 caracteres)</label>
+        <input type="password" id="reg-pass" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Rol</label>
+        <div class="role-select">
+          <div class="role-opt active" id="role-coach" onclick="setRole('coach')">
+            <span class="ri">👨‍💼</span>
+            <span class="rn">Entrenador</span>
+          </div>
+          <div class="role-opt" id="role-client" onclick="setRole('client')">
+            <span class="ri">🏋️</span>
+            <span class="rn">Cliente</span>
+          </div>
+        </div>
+      </div>
+      <!-- Coach invite code for clients -->
+      <div class="field" id="coach-code-field" style="display:none">
+        <label>Email del entrenador</label>
+        <input type="email" id="reg-coach-email" placeholder="entrenador@email.com">
+      </div>
+      <button class="submit-btn" id="reg-btn" onclick="doRegister()">
+        <span id="reg-txt">Crear cuenta</span>
+        <div class="spinner" id="reg-spin"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ══════════════════════════════════════════════════════
+//  ⚙️  CONFIGURACIÓN — Reemplaza con tus datos de Supabase
+//  Supabase > Settings > API
+// ══════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://TU-PROYECTO.supabase.co';
+const SUPABASE_ANON = 'TU-ANON-KEY';
+
+// ──────────────────────────────────────────────────────
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── Check existing session ──
+const { data: { session } } = await supabase.auth.getSession();
+if (session) {
+  window.location.href = 'app.html';
+} else {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-wrap').style.display = 'grid';
+}
+
+// ── Tab switch ──
+window.switchTab = (tab) => {
+  document.getElementById('form-login').style.display    = tab==='login'    ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active',    tab==='login');
+  document.getElementById('tab-register').classList.toggle('active', tab==='register');
+};
+
+// ── Role selection ──
+let selectedRole = 'coach';
+window.setRole = (role) => {
+  selectedRole = role;
+  document.getElementById('role-coach').classList.toggle('active',  role==='coach');
+  document.getElementById('role-client').classList.toggle('active', role==='client');
+  document.getElementById('coach-code-field').style.display = role==='client' ? 'block' : 'none';
+};
+
+// ── LOGIN ──
+window.doLogin = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-err');
+  const okEl  = document.getElementById('login-ok');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+
+  if (!email || !pass) { errEl.textContent='Rellena todos los campos'; errEl.classList.add('show'); return; }
+
+  setLoading('login', true);
+  const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  setLoading('login', false);
+
+  if (error) {
+    errEl.textContent = error.message === 'Invalid login credentials'
+      ? 'Email o contraseña incorrectos'
+      : error.message;
+    errEl.classList.add('show');
+  } else {
+    okEl.textContent = '✓ Accediendo...';
+    okEl.classList.add('show');
+    setTimeout(() => window.location.href = 'app.html', 600);
+  }
+};
+
+// ── REGISTER ──
+window.doRegister = async () => {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const coachEmail = document.getElementById('reg-coach-email').value.trim();
+  const errEl = document.getElementById('reg-err');
+  const okEl  = document.getElementById('reg-ok');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+
+  if (!name || !email || !pass) { errEl.textContent='Rellena todos los campos'; errEl.classList.add('show'); return; }
+  if (pass.length < 8) { errEl.textContent='La contraseña debe tener mínimo 8 caracteres'; errEl.classList.add('show'); return; }
+  if (selectedRole==='client' && !coachEmail) { errEl.textContent='Introduce el email de tu entrenador'; errEl.classList.add('show'); return; }
+
+  setLoading('reg', true);
+
+  // Find coach if client
+  let coachId = null;
+  if (selectedRole === 'client' && coachEmail) {
+    const { data: coachProfile } = await supabase
+      .from('profiles').select('id').eq('email', coachEmail).eq('role','coach').single();
+    if (!coachProfile) {
+      setLoading('reg', false);
+      errEl.textContent = 'No se encontró ningún entrenador con ese email';
+      errEl.classList.add('show'); return;
+    }
+    coachId = coachProfile.id;
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email, password: pass,
+    options: { data: { full_name: name, role: selectedRole } }
+  });
+
+  if (error) {
+    setLoading('reg', false);
+    errEl.textContent = error.message;
+    errEl.classList.add('show'); return;
+  }
+
+  // Link client to coach
+  if (selectedRole === 'client' && coachId && data.user) {
+    await supabase.from('profiles').update({ coach_id: coachId }).eq('id', data.user.id);
+  }
+
+  setLoading('reg', false);
+  okEl.textContent = '✓ Cuenta creada. Revisa tu email para confirmar.';
+  okEl.classList.add('show');
+};
+
+// ── Helpers ──
+function setLoading(form, loading) {
+  const btn  = document.getElementById(`${form}-btn`);
+  const txt  = document.getElementById(`${form}-txt`);
+  const spin = document.getElementById(`${form}-spin`);
+  btn.disabled = loading;
+  txt.style.display  = loading ? 'none' : 'inline';
+  spin.style.display = loading ? 'block' : 'none';
+}
+</script>
+</body>
+</html>
