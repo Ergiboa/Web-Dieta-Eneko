@@ -557,7 +557,6 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
         <button class="btn sm" onclick="saveDietToServer()">💾 Guardar</button>
       </div>
     </div>
-    <datalist id="db-products-list" id="db-products-list"></datalist>
     <div id="diet-week-grid"></div>
   </div>
 
@@ -595,32 +594,22 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
 
   <!-- COMPRA -->
   <div id="panel-compra" class="panel">
-    <!-- Supermarket selector dropdown -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;flex:1;min-width:200px">
-        <span style="font-size:13px">🛒</span>
-        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:var(--muted2);white-space:nowrap">Ver precios de:</span>
-        <select id="super-dropdown" onchange="onSuperDropdown(this.value)"
-          style="flex:1;background:transparent;border:none;color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;outline:none;cursor:pointer">
-          <option value="all">Todos los supermercados</option>
-          <option value="mercadona">🟢 Solo Mercadona</option>
-          <option value="lidl">🔵 Solo Lidl</option>
-          <option value="aldi">🟠 Solo Aldi</option>
-          <option value="pendientes">⚠ Sin precio asignado</option>
-        </select>
-      </div>
-      <button class="btn ghost sm no-print" onclick="window.print()" title="Imprimir lista">🖨</button>
-      <button class="btn ghost sm no-print" onclick="resetChecked()" title="Desmarcar todo">↺ Reset</button>
-      <button class="btn gold sm no-print" onclick="refreshPrices()" title="Actualizar precios con IA">✨ IA</button>
-    </div>
     <div class="price-total-bar">
       <div class="price-box"><div class="pb-label">Mejor precio</div><div class="pb-val" id="total-global">—</div></div>
-      <div class="price-box"><div class="pb-label">🟢 Mercadona</div><div class="pb-val" id="total-merc" style="color:var(--accent)">—</div></div>
-      <div class="price-box"><div class="pb-label">🔵 Lidl</div><div class="pb-val" id="total-lidl" style="color:var(--accent2)">—</div></div>
-      <div class="price-box"><div class="pb-label">🟠 Aldi</div><div class="pb-val" id="total-aldi" style="color:var(--orange)">—</div></div>
+      <div class="price-box"><div class="pb-label">Mercadona</div><div class="pb-val" id="total-merc" style="color:var(--accent)">—</div></div>
+      <div class="price-box"><div class="pb-label">Lidl</div><div class="pb-val" id="total-lidl" style="color:var(--accent2)">—</div></div>
+      <div class="price-box"><div class="pb-label">Aldi</div><div class="pb-val" id="total-aldi" style="color:var(--orange)">—</div></div>
+      <div style="display:flex;gap:5px;align-items:center" class="no-print">
+        <button class="btn ghost sm" onclick="window.print()">🖨</button>
+        <button class="btn ghost sm" onclick="resetChecked()">↺</button>
+      </div>
     </div>
-    <div class="super-tabs no-print" style="display:none">
+    <div class="super-tabs no-print">
       <button class="super-tab active" onclick="showSuperTab('all',this)">Todos</button>
+      <button class="super-tab" onclick="showSuperTab('mercadona',this)">🟢 Mercadona</button>
+      <button class="super-tab" onclick="showSuperTab('lidl',this)">🔵 Lidl</button>
+      <button class="super-tab" onclick="showSuperTab('aldi',this)">🟠 Aldi</button>
+      <button class="super-tab" onclick="showSuperTab('pendientes',this)">⚠ Sin precio</button>
     </div>
     <div class="table-scroll">
       <table><thead><tr><th>✓</th><th>Producto</th><th>Cantidad</th><th>Stock</th><th>Falta</th><th>Precio</th><th>Mejor</th><th>Total</th></tr></thead>
@@ -757,10 +746,8 @@ let allClients     = [];
 
 // Data (cargada de Supabase)
 let DIET     = {};
-function getDefaultDB(){return {avena:{base:'100g',kcal:389,prot:17,carb:66,fat:7,fib:10},'scoop proteina':{base:'1ud',kcal:120,prot:25,carb:3,fat:2,fib:0},patata:{base:'100g',kcal:77,prot:2,carb:17,fat:0.1,fib:2.2},'queso fresco batido':{base:'100g',kcal:72,prot:8,carb:3,fat:3,fib:0},'leche de soja':{base:'100ml',kcal:33,prot:3.3,carb:1.2,fat:1.8,fib:0.4},'crema de arroz':{base:'100g',kcal:360,prot:7,carb:79,fat:1,fib:1},merluza:{base:'100g',kcal:82,prot:18,carb:0,fat:1,fib:0},'arandanos congelados':{base:'100g',kcal:57,prot:0.7,carb:14,fat:0.3,fib:2.4},'platano pequeno':{base:'1ud',kcal:89,prot:1.1,carb:23,fat:0.3,fib:2.6},'esparragos trigueros':{base:'100g',kcal:20,prot:2.2,carb:3.9,fat:0.1,fib:2.1},'frambuesas congeladas':{base:'100g',kcal:52,prot:1.2,carb:12,fat:0.7,fib:6.5},'yogur natural entero':{base:'1ud',kcal:90,prot:5,carb:6,fat:5,fib:0},kiwi:{base:'1ud',kcal:61,prot:1.1,carb:15,fat:0.5,fib:3},'huevo entero':{base:'1ud',kcal:70,prot:6,carb:0.4,fat:4.8,fib:0},almendras:{base:'100g',kcal:579,prot:21,carb:22,fat:50,fib:12.5},fresas:{base:'100g',kcal:32,prot:0.7,carb:7.7,fat:0.3,fib:2},pechuga:{base:'100g',kcal:165,prot:31,carb:0,fat:3.6,fib:0},'queso cottage light':{base:'100g',kcal:72,prot:12,carb:3,fat:1,fib:0},tomate:{base:'100g',kcal:18,prot:0.9,carb:3.9,fat:0.2,fib:1.2},mandarina:{base:'1ud',kcal:40,prot:0.8,carb:10,fat:0.3,fib:1.5},'arroz integral':{base:'100g',kcal:355,prot:7.5,carb:74,fat:2.7,fib:3.5},'atun tarro cristal':{base:'100g',kcal:116,prot:26,carb:0,fat:1,fib:0},lechuga:{base:'1ud',kcal:15,prot:1.4,carb:2.9,fat:0.2,fib:1.3},'carne de conejo':{base:'100g',kcal:136,prot:20,carb:0,fat:6,fib:0},'pimiento tricolor congelado':{base:'100g',kcal:27,prot:1,carb:6.3,fat:0.2,fib:2},'pan integral':{base:'1ud',kcal:80,prot:3,carb:15,fat:1,fib:2},'masa pizza integral':{base:'1ud',kcal:300,prot:9,carb:58,fat:3,fib:4},lentejas:{base:'100g',kcal:116,prot:9,carb:20,fat:0.4,fib:8},'tomate frito':{base:'100g',kcal:80,prot:1.5,carb:12,fat:3,fib:1.5},espelta:{base:'100g',kcal:338,prot:14.5,carb:65,fat:2.4,fib:11},brocoli:{base:'100g',kcal:34,prot:2.8,carb:7,fat:0.4,fib:2.6},'tiras de pollo':{base:'100g',kcal:165,prot:31,carb:0,fat:3.6,fib:0},mozarella:{base:'100g',kcal:280,prot:22,carb:2,fat:22,fib:0},'filete ternera':{base:'100g',kcal:179,prot:26,carb:0,fat:8,fib:0}};}
-function getDefaultPrices(){return {almendras:{merc:3.29,lidl:2.99,aldi:2.89,base:'200g'},'arandanos congelados':{merc:2.99,lidl:2.49,aldi:2.39,base:'300g'},'arroz integral':{merc:1.59,lidl:1.29,aldi:1.19,base:'1kg'},'atun tarro cristal':{merc:1.89,lidl:1.69,aldi:1.59,base:'160g'},avena:{merc:1.99,lidl:1.39,aldi:1.29,base:'500g'},brocoli:{merc:0.99,lidl:0.89,aldi:0.79,base:'ud'},'carne de conejo':{merc:6.99,lidl:5.99,aldi:5.49,base:'kg'},'crema de arroz':{merc:3.49,lidl:3.29,aldi:3.19,base:'500g'},'esparragos trigueros':{merc:1.29,lidl:1.09,aldi:0.99,base:'300g'},espelta:{merc:2.49,lidl:1.99,aldi:1.89,base:'500g'},'filete ternera':{merc:9.99,lidl:8.99,aldi:8.49,base:'kg'},'frambuesas congeladas':{merc:2.79,lidl:2.39,aldi:2.29,base:'300g'},fresas:{merc:1.99,lidl:1.69,aldi:1.49,base:'500g'},'huevo entero':{merc:1.89,lidl:1.59,aldi:1.49,base:'6ud'},kiwi:{merc:1.49,lidl:1.29,aldi:1.19,base:'4ud'},'leche de soja':{merc:1.29,lidl:0.99,aldi:0.89,base:'1L'},lechuga:{merc:0.89,lidl:0.79,aldi:0.69,base:'ud'},lentejas:{merc:0.99,lidl:0.79,aldi:0.69,base:'500g'},mandarina:{merc:1.49,lidl:1.29,aldi:1.19,base:'malla'},'masa pizza integral':{merc:1.99,lidl:1.79,aldi:1.59,base:'ud'},merluza:{merc:7.99,lidl:6.99,aldi:6.49,base:'kg'},mozarella:{merc:1.39,lidl:1.19,aldi:1.09,base:'125g'},'pan integral':{merc:1.79,lidl:1.39,aldi:1.29,base:'ud'},patata:{merc:1.19,lidl:0.99,aldi:0.89,base:'kg'},pechuga:{merc:5.99,lidl:5.29,aldi:4.99,base:'kg'},'pimiento tricolor congelado':{merc:2.49,lidl:1.99,aldi:1.89,base:'400g'},'platano pequeno':{merc:1.29,lidl:1.09,aldi:0.99,base:'kg'},'queso cottage light':{merc:1.89,lidl:1.69,aldi:1.49,base:'250g'},'queso fresco batido':{merc:1.59,lidl:1.39,aldi:1.29,base:'500g'},'scoop proteina':{merc:39.99,lidl:null,aldi:null,base:'kg'},'tiras de pollo':{merc:4.99,lidl:4.49,aldi:4.29,base:'kg'},tomate:{merc:0.99,lidl:0.89,aldi:0.79,base:'kg'},'tomate frito':{merc:0.89,lidl:0.75,aldi:0.69,base:'350g'},'yogur natural entero':{merc:0.45,lidl:0.39,aldi:0.35,base:'ud'}};}
-let DB       = getDefaultDB();
-let PRICES   = getDefaultPrices();
+let DB       = {};
+let PRICES   = {};
 let RECIPES  = [];
 let STOCK    = {};
 let CHECKED  = {};
@@ -872,24 +859,10 @@ async function loadCoachData() {
     sb.from('nutrition_db').select('*').eq('coach_id', cid),
     sb.from('prices').select('*').eq('coach_id', cid),
   ]);
-  // Load from Supabase — overwrite defaults only if server has data
-  const dbFromServer = {};
-  (dbRes.data||[]).forEach(r => dbFromServer[r.product] = {base:r.base,kcal:r.kcal,prot:r.prot,carb:r.carb,fat:r.fat,fib:r.fib});
-  if(Object.keys(dbFromServer).length > 0) DB = dbFromServer;
-  else {
-    // First time: save defaults to Supabase
-    const defRows = Object.entries(DB).map(([product,v]) => ({coach_id:currentUser.id,product,...v}));
-    sb.from('nutrition_db').upsert(defRows, {onConflict:'coach_id,product'});
-  }
-
-  const pricesFromServer = {};
-  (pricesRes.data||[]).forEach(r => pricesFromServer[r.product] = {merc:r.merc,lidl:r.lidl,aldi:r.aldi,base:r.base_unit});
-  if(Object.keys(pricesFromServer).length > 0) PRICES = pricesFromServer;
-  else {
-    // First time: save defaults to Supabase
-    const priceRows = Object.entries(PRICES).map(([product,v]) => ({coach_id:currentUser.id,product,merc:v.merc,lidl:v.lidl,aldi:v.aldi,base_unit:v.base}));
-    sb.from('prices').upsert(priceRows, {onConflict:'coach_id,product'});
-  }
+  DB = {};
+  (dbRes.data||[]).forEach(r => DB[r.product] = {base:r.base,kcal:r.kcal,prot:r.prot,carb:r.carb,fat:r.fat,fib:r.fib});
+  PRICES = {};
+  (pricesRes.data||[]).forEach(r => PRICES[r.product] = {merc:r.merc,lidl:r.lidl,aldi:r.aldi,base:r.base_unit});
   // Load recipes from localStorage as fallback (simple approach)
   RECIPES = JSON.parse(localStorage.getItem('nc_recipes') || '[]');
   if (RECIPES.length === 0) RECIPES = getDefaultRecipes();
@@ -923,19 +896,19 @@ async function loadClientData(clientId) {
     TRN_LOG[THIS_WEEK][row.routine_id] = { done: row.completed, exercises: row.exercises || {} };
   });
 
-  // Always load coach's DB and prices (ensures fresh data per client switch)
-  DB = getDefaultDB();
-  PRICES = getDefaultPrices();
-  const coachId2 = currentProfile.role === 'coach' ? currentUser.id : currentProfile.coach_id;
-  if (coachId2) {
-    const [dbRes2, pricesRes2] = await Promise.all([
-      sb.from('nutrition_db').select('*').eq('coach_id', coachId2),
-      sb.from('prices').select('*').eq('coach_id', coachId2),
-    ]);
-    if ((dbRes2.data||[]).length > 0)
-      (dbRes2.data).forEach(r => DB[r.product] = {base:r.base,kcal:r.kcal,prot:r.prot,carb:r.carb,fat:r.fat,fib:r.fib});
-    if ((pricesRes2.data||[]).length > 0)
-      (pricesRes2.data).forEach(r => PRICES[r.product] = {merc:r.merc,lidl:r.lidl,aldi:r.aldi,base:r.base_unit});
+  // If coach has no DB loaded yet
+  if (Object.keys(DB).length === 0 && currentProfile.role !== 'coach') {
+    const coachId2 = currentProfile.coach_id;
+    if (coachId2) {
+      const [dbRes, pricesRes] = await Promise.all([
+        sb.from('nutrition_db').select('*').eq('coach_id', coachId2),
+        sb.from('prices').select('*').eq('coach_id', coachId2),
+      ]);
+      DB = {};
+      (dbRes.data||[]).forEach(r => DB[r.product] = {base:r.base,kcal:r.kcal,prot:r.prot,carb:r.carb,fat:r.fat,fib:r.fib});
+      PRICES = {};
+      (pricesRes.data||[]).forEach(r => PRICES[r.product] = {merc:r.merc,lidl:r.lidl,aldi:r.aldi,base:r.base_unit});
+    }
   }
 
   // If no routines yet, pre-populate defaults (for coach)
@@ -1310,9 +1283,6 @@ function recipeOptions(){return`<option value="">📖 Aplicar receta...</option>
 const isCoachView = () => currentProfile?.role === 'coach';
 
 function renderDiet(){
-  // Refresh autocomplete datalist
-  const dl=document.getElementById('db-products-list');
-  if(dl)dl.innerHTML=Object.keys(DB).sort().map(k=>`<option value="${k}">`).join('');
   const locked = !isCoachView();
   let html='';
   Object.entries(DIET).forEach(([day,dayObj])=>{
@@ -1324,7 +1294,7 @@ function renderDiet(){
         <div class="ing-row">
           <input class="ing-qty" type="number" min="0" value="${ing.qty}" ${locked?'readonly':''} onchange="updIng('${day}','${meal}',${idx},'qty',+this.value)">
           <select class="ing-unit" ${locked?'disabled':''} onchange="updIng('${day}','${meal}',${idx},'u',this.value)">${['g','ml','ud'].map(u=>`<option ${ing.u===u?'selected':''}>${u}</option>`).join('')}</select>
-          <input class="ing-name" type="text" value="${ing.p}" placeholder="ingrediente" list="db-products-list" ${locked?'readonly':''} onchange="updIng('${day}','${meal}',${idx},'p',this.value)">
+          <input class="ing-name" type="text" value="${ing.p}" placeholder="ingrediente" ${locked?'readonly':''} onchange="updIng('${day}','${meal}',${idx},'p',this.value)">
           ${locked?'':`<button class="ing-del" onclick="delIng('${day}','${meal}',${idx})">×</button>`}
         </div>`).join('');
       mcols+=`<div class="diet-meal-col">
@@ -1375,7 +1345,7 @@ function renderDB(){
 window.updDB=(k,f,v)=>{if(!DB[k])DB[k]={base:'100g',kcal:0,prot:0,carb:0,fat:0,fib:0};DB[k][f]=v;};
 window.renDB=(ok,nk)=>{nk=nk.toLowerCase().trim();if(!nk||nk===ok)return;DB[nk]=DB[ok];delete DB[ok];renderDB();};
 window.delDB=(k)=>{if(confirm(`Eliminar "${k}"?`)){delete DB[k];renderDB();}};
-window.addDBRow=()=>{const n=prompt('Nombre del producto:');if(!n)return;const k=n.toLowerCase().trim();if(DB[k]){toast('Ya existe en la DB');renderDB();return;}DB[k]={base:'100g',kcal:0,prot:0,carb:0,fat:0,fib:0};renderDB();toast(`✓ "${k}" añadido`);};
+window.addDBRow=()=>{const n=prompt('Nombre del producto:');if(!n)return;const k=n.toLowerCase().trim();DB[k]={base:'100g',kcal:0,prot:0,carb:0,fat:0,fib:0};renderDB();};
 window.saveDBToServer=saveDBToServer;
 window.exportJ=(t)=>{const data=t==='db'?DB:STOCK;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=t+'.json';a.click();};
 
@@ -1421,8 +1391,7 @@ function renderCompra(){
 }
 window.togCheck=(i,v)=>{CHECKED[i]=v;renderCompra();};
 window.resetChecked=()=>{CHECKED={};renderCompra();};
-window.showSuperTab=(n,el)=>{currentSuperTab=n;document.querySelectorAll('.super-tab').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderCompra();};
-window.onSuperDropdown=(val)=>{currentSuperTab=val;renderCompra();};
+window.showSuperTab=(n,el)=>{currentSuperTab=n;document.querySelectorAll('.super-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderCompra();};
 
 // ══════════════════════════════════════════════════════
 //  RENDER: STOCK & COOK
@@ -1592,35 +1561,27 @@ window.saveCoachFeedback=saveCoachFeedback;
 //  PRICES (AI-powered)
 // ══════════════════════════════════════════════════════
 async function checkPrices(){
-  // Prices are pre-loaded from defaults. Show status and render.
-  const el=document.getElementById('price-status');
-  const n=Object.keys(PRICES).length;
-  el.textContent=`✓ ${n} productos`;
-  el.className='ok';
-  renderCompra();
+  const last=localStorage.getItem('nc_last_price_upd');
+  const today=new Date().toDateString();
+  if(last!==today){await refreshPrices();localStorage.setItem('nc_last_price_upd',today);}
+  else{document.getElementById('price-status').textContent='✓ Precios de hoy';document.getElementById('price-status').className='ok';}
 }
-
 async function refreshPrices(){
-  // Save current PRICES to Supabase (coach only)
-  const el=document.getElementById('price-status');
-  el.textContent='💾 Guardando...';el.className='loading';
+  const el=document.getElementById('price-status');el.textContent='🔄 Actualizando...';el.className='loading';
+  const prods=Object.keys(PRICES).length>0?Object.keys(PRICES):['avena','patata','pollo','huevo','arroz'];
   try{
-    const coachId=currentProfile?.role==='coach'?currentUser.id:currentProfile?.coach_id;
-    if(coachId && Object.keys(PRICES).length>0){
-      const rows=Object.entries(PRICES).map(([product,v])=>({
-        coach_id:coachId,product,
-        merc:v.merc??null,lidl:v.lidl??null,aldi:v.aldi??null,
-        base_unit:v.base||v.base_unit||'ud',
-        updated_at:new Date().toISOString()
-      }));
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`Experto en precios supermercados España. SOLO JSON: {"producto":{"merc":1.99,"lidl":1.79,"aldi":1.59,"base":"500g"}}. Fecha: ${new Date().toLocaleDateString('es-ES')}`,messages:[{role:'user',content:`Precios actuales (Mercadona, Lidl, Aldi) para: ${prods.join(', ')}. Solo JSON.`}]})});
+    const d=await r.json();const txt=d.content?.map(c=>c.text||'').join('');
+    const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    let u=0;Object.entries(p).forEach(([k,v])=>{if(typeof v.merc==='number'){PRICES[k]={...PRICES[k],...v};u++;}});
+    // Save to Supabase
+    const coachId=currentProfile.role==='coach'?currentUser.id:currentProfile.coach_id;
+    if(coachId){
+      const rows=Object.entries(PRICES).map(([product,v])=>({coach_id:coachId,product,merc:v.merc,lidl:v.lidl,aldi:v.aldi,base_unit:v.base||v.base_unit||'ud',updated_at:new Date().toISOString()}));
       await sb.from('prices').upsert(rows,{onConflict:'coach_id,product'});
     }
-    const n=Object.keys(PRICES).length;
-    el.textContent=`✓ ${n} productos guardados`;el.className='ok';
-  }catch(e){
-    el.textContent='⚠ Error guardando';el.className='';
-  }
-  renderCompra();
+    el.textContent=`✓ Precios hoy (${u})`;el.className='ok';renderCompra();
+  }catch(e){el.textContent='⚠ Precios guardados';el.className='';renderCompra();}
 }
 window.refreshPrices=refreshPrices;
 
@@ -1661,9 +1622,8 @@ window.toast=(msg)=>{const el=document.getElementById('toast');el.textContent=ms
 //  DEFAULT DATA FACTORIES
 // ══════════════════════════════════════════════════════
 function weekKey(){const d=new Date(),j=new Date(d.getFullYear(),0,4);const w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7);return`${d.getFullYear()}-W${String(w).padStart(2,'0')}`;}
-function getDefaultDiet(){return{LUNES:{desayuno:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}],comida:[{p:'patata',qty:300,u:'g'},{p:'merluza',qty:200,u:'g'},{p:'esparragos trigueros',qty:200,u:'g'}],preEntreno:[{p:'scoop proteina',qty:1,u:'ud'},{p:'crema de arroz',qty:50,u:'g'},{p:'platano pequeno',qty:1,u:'ud'}],cena:[{p:'queso fresco batido',qty:200,u:'g'},{p:'arandanos congelados',qty:50,u:'g'},{p:'frambuesas congeladas',qty:50,u:'g'},{p:'yogur natural entero',qty:1,u:'ud'},{p:'huevo entero',qty:1,u:'ud'},{p:'fresas',qty:150,u:'g'}],preCama:[{p:'scoop proteina',qty:1,u:'ud'},{p:'kiwi',qty:1,u:'ud'},{p:'almendras',qty:15,u:'g'}]},MARTES:{desayuno:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}],comida:[{p:'patata',qty:300,u:'g'},{p:'pechuga',qty:200,u:'g'}],preEntreno:[{p:'scoop proteina',qty:1,u:'ud'},{p:'crema de arroz',qty:50,u:'g'},{p:'platano pequeno',qty:1,u:'ud'}],cena:[{p:'queso fresco batido',qty:200,u:'g'},{p:'arandanos congelados',qty:50,u:'g'},{p:'queso cottage light',qty:50,u:'g'},{p:'frambuesas congeladas',qty:50,u:'g'},{p:'yogur natural entero',qty:1,u:'ud'},{p:'huevo entero',qty:1,u:'ud'},{p:'tomate',qty:100,u:'g'}],preCama:[{p:'scoop proteina',qty:1,u:'ud'},{p:'kiwi',qty:1,u:'ud'},{p:'mandarina',qty:1,u:'ud'}]},MIERCOLES:{desayuno:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}],comida:[{p:'arroz integral',qty:80,u:'g'},{p:'atun tarro cristal',qty:150,u:'g'},{p:'esparragos trigueros',qty:200,u:'g'},{p:'lechuga',qty:1,u:'ud'}],preEntreno:[{p:'scoop proteina',qty:1,u:'ud'},{p:'crema de arroz',qty:50,u:'g'},{p:'platano pequeno',qty:1,u:'ud'}],cena:[{p:'queso fresco batido',qty:200,u:'g'},{p:'arandanos congelados',qty:50,u:'g'},{p:'queso cottage light',qty:50,u:'g'},{p:'frambuesas congeladas',qty:50,u:'g'},{p:'yogur natural entero',qty:1,u:'ud'},{p:'huevo entero',qty:1,u:'ud'},{p:'fresas',qty:150,u:'g'}],preCama:[{p:'scoop proteina',qty:1,u:'ud'},{p:'kiwi',qty:1,u:'ud'}]},JUEVES:{desayuno:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}],comida:[{p:'carne de conejo',qty:250,u:'g'},{p:'patata',qty:300,u:'g'},{p:'pimiento tricolor congelado',qty:200,u:'g'}],preEntreno:[{p:'scoop proteina',qty:1,u:'ud'},{p:'crema de arroz',qty:50,u:'g'},{p:'platano pequeno',qty:1,u:'ud'}],cena:[{p:'queso fresco batido',qty:200,u:'g'},{p:'arandanos congelados',qty:50,u:'g'},{p:'frambuesas congeladas',qty:50,u:'g'},{p:'queso cottage light',qty:50,u:'g'},{p:'yogur natural entero',qty:1,u:'ud'},{p:'huevo entero',qty:1,u:'ud'}],preCama:[{p:'scoop proteina',qty:1,u:'ud'},{p:'kiwi',qty:1,u:'ud'},{p:'mandarina',qty:1,u:'ud'}]},VIERNES:{desayuno:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}],comida:[{p:'queso fresco batido',qty:200,u:'g'},{p:'huevo entero',qty:1,u:'ud'},{p:'tomate',qty:100,u:'g'}],preEntreno:[{p:'scoop proteina',qty:1,u:'ud'},{p:'crema de arroz',qty:50,u:'g'},{p:'platano pequeno',qty:1,u:'ud'}],cena:[{p:'queso fresco batido',qty:200,u:'g'},{p:'arandanos congelados',qty:50,u:'g'},{p:'frambuesas congeladas',qty:50,u:'g'},{p:'huevo entero',qty:1,u:'ud'}],preCama:[{p:'scoop proteina',qty:1,u:'ud'},{p:'kiwi',qty:1,u:'ud'}]},SABADO:{desayuno:[{p:'pan integral',qty:2,u:'ud'},{p:'leche de soja',qty:200,u:'ml'},{p:'mandarina',qty:1,u:'ud'}],comida:[{p:'arroz integral',qty:50,u:'g'},{p:'lentejas',qty:150,u:'g'},{p:'espelta',qty:60,u:'g'},{p:'brocoli',qty:200,u:'g'},{p:'mandarina',qty:1,u:'ud'}],preEntreno:[],cena:[{p:'masa pizza integral',qty:1,u:'ud'},{p:'tomate frito',qty:80,u:'g'},{p:'tiras de pollo',qty:100,u:'g'},{p:'mozarella',qty:100,u:'g'}],preCama:[]},DOMINGO:{desayuno:[{p:'pan integral',qty:2,u:'ud'},{p:'leche de soja',qty:200,u:'ml'},{p:'mandarina',qty:1,u:'ud'}],comida:[{p:'filete ternera',qty:180,u:'g'},{p:'patata',qty:300,u:'g'},{p:'espelta',qty:60,u:'g'},{p:'lechuga',qty:1,u:'ud'},{p:'mandarina',qty:1,u:'ud'}],preEntreno:[],cena:[{p:'masa pizza integral',qty:1,u:'ud'},{p:'tomate frito',qty:80,u:'g'},{p:'tiras de pollo',qty:100,u:'g'},{p:'mozarella',qty:100,u:'g'}],preCama:[]}};}"
-
-function getDefaultRecipes(){return[{id:'r1',name:'Avena con leche soja',tags:['desayuno'],items:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}]},{id:'r2',name:'Merluza con patata',tags:['comida'],items:[{p:'patata',qty:300,u:'g'},{p:'merluza',qty:200,u:'g'},{p:'esparragos trigueros',qty:200,u:'g'}]},{id:'r3',name:'Bowl proteico nocturno',tags:['cena'],items:[{p:'queso fresco batido',qty:200,u:'g'},{p:'arandanos congelados',qty:50,u:'g'},{p:'frambuesas congeladas',qty:50,u:'g'},{p:'yogur natural entero',qty:1,u:'ud'},{p:'huevo entero',qty:1,u:'ud'}]},{id:'r4',name:'Pre-entreno arroz',tags:['preEntreno'],items:[{p:'scoop proteina',qty:1,u:'ud'},{p:'crema de arroz',qty:50,u:'g'},{p:'platano pequeno',qty:1,u:'ud'}]},{id:'r5',name:'Pizza integral pollo',tags:['cena'],items:[{p:'masa pizza integral',qty:1,u:'ud'},{p:'tomate frito',qty:80,u:'g'},{p:'tiras de pollo',qty:100,u:'g'},{p:'mozarella',qty:100,u:'g'}]}];}
+function getDefaultDiet(){return{LUNES:{desayuno:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}],comida:[{p:'patata',qty:300,u:'g'},{p:'merluza',qty:200,u:'g'}],preEntreno:[{p:'scoop proteina',qty:1,u:'ud'},{p:'platano pequeno',qty:1,u:'ud'}],cena:[{p:'queso fresco batido',qty:200,u:'g'},{p:'huevo entero',qty:1,u:'ud'}],preCama:[{p:'scoop proteina',qty:1,u:'ud'}]}};}
+function getDefaultRecipes(){return[{id:'r1',name:'Avena con soja',tags:['desayuno'],items:[{p:'avena',qty:70,u:'g'},{p:'leche de soja',qty:200,u:'ml'}]}];}
 function getDefaultRoutines(){return[{id:'dr1',name:'Pecho + Tríceps',muscles:['Pecho','Tríceps'],client_id:currentClientId,coach_id:currentUser.id,exercises:[{id:'dr1e1',name:'Press banca plano',note:'Aumentar peso si completas todas las reps',sets:[{reps:10,weight:'',time:''},{reps:10,weight:'',time:''},{reps:10,weight:'',time:''}],rpe:0},{id:'dr1e2',name:'Press inclinado mancuernas',note:'',sets:[{reps:12,weight:'',time:''},{reps:12,weight:'',time:''},{reps:12,weight:'',time:''}],rpe:0},{id:'dr1e3',name:'Fondos en paralelas',note:'',sets:[{reps:12,weight:'',time:''},{reps:12,weight:'',time:''},{reps:12,weight:'',time:''}],rpe:0},{id:'dr1e4',name:'Extensiones tríceps polea',note:'',sets:[{reps:15,weight:'',time:''},{reps:15,weight:'',time:''},{reps:15,weight:'',time:''}],rpe:0}]},{id:'dr2',name:'Pierna',muscles:['Piernas','Glúteos'],client_id:currentClientId,coach_id:currentUser.id,exercises:[{id:'dr2e1',name:'Sentadilla barra',note:'Prioridad del día',sets:[{reps:8,weight:'',time:''},{reps:8,weight:'',time:''},{reps:8,weight:'',time:''},{reps:8,weight:'',time:''}],rpe:0},{id:'dr2e2',name:'Prensa 45°',note:'',sets:[{reps:12,weight:'',time:''},{reps:12,weight:'',time:''},{reps:12,weight:'',time:''}],rpe:0},{id:'dr2e3',name:'Curl femoral tumbado',note:'',sets:[{reps:15,weight:'',time:''},{reps:15,weight:'',time:''},{reps:15,weight:'',time:''}],rpe:0},{id:'dr2e4',name:'Elevaciones gemelos',note:'Rango completo',sets:[{reps:20,weight:'',time:''},{reps:20,weight:'',time:''},{reps:20,weight:'',time:''},{reps:20,weight:'',time:''}],rpe:0}]}];}
 
 // ── BOOT ──
