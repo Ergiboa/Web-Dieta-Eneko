@@ -249,21 +249,33 @@ option{background:var(--card)}
         <label>Contraseña (mínimo 8 caracteres)</label>
         <input type="password" id="reg-pass" placeholder="••••••••" autocomplete="new-password">
       </div>
+      <!-- Código secreto de entrenador (oculto por defecto) -->
+      <div class="field" id="coach-secret-field" style="display:none">
+        <label>Código de entrenador</label>
+        <input type="password" id="coach-secret-inp" placeholder="••••••••"
+          oninput="checkCoachSecret(this.value)">
+        <div id="coach-secret-hint" style="font-size:10px;color:var(--muted2);margin-top:4px">Introduce el código para activar el rol de entrenador.</div>
+      </div>
       <div class="field">
-        <label>Rol</label>
+        <label>
+          Tipo de cuenta
+          <span id="unlock-coach-link"
+            style="float:right;font-size:9px;color:var(--muted);cursor:pointer;text-decoration:underline;letter-spacing:.5px"
+            onclick="toggleCoachSecret()">¿Eres entrenador?</span>
+        </label>
         <div class="role-select">
-          <div class="role-opt active" id="role-coach" onclick="setRole('coach')">
+          <div class="role-opt" id="role-coach" style="display:none" onclick="setRole('coach')">
             <span class="ri">👨‍💼</span>
             <span class="rn">Entrenador</span>
           </div>
-          <div class="role-opt" id="role-client" onclick="setRole('client')">
+          <div class="role-opt active" id="role-client" onclick="setRole('client')">
             <span class="ri">🏋️</span>
             <span class="rn">Cliente</span>
           </div>
         </div>
       </div>
-      <!-- Coach invite code for clients -->
-      <div class="field" id="coach-code-field" style="display:none">
+      <!-- Email del entrenador para clientes -->
+      <div class="field" id="coach-code-field" style="display:block">
         <label>Email del entrenador</label>
         <input type="email" id="reg-coach-email" placeholder="entrenador@email.com">
       </div>
@@ -304,13 +316,45 @@ window.switchTab = (tab) => {
   document.getElementById('tab-register').classList.toggle('active', tab==='register');
 };
 
+// ══════════════════════════════════════════════════════
+//  🔑 CÓDIGO SECRETO DE ENTRENADOR — Cámbialo por el tuyo
+// ══════════════════════════════════════════════════════
+const COACH_SECRET = 'Enekokus2026*';   // ← Pon aquí tu código secreto
+
 // ── Role selection ──
-let selectedRole = 'coach';
+let selectedRole = 'client';
+let coachUnlocked = false;
+
 window.setRole = (role) => {
+  if (role === 'coach' && !coachUnlocked) return;
   selectedRole = role;
   document.getElementById('role-coach').classList.toggle('active',  role==='coach');
   document.getElementById('role-client').classList.toggle('active', role==='client');
   document.getElementById('coach-code-field').style.display = role==='client' ? 'block' : 'none';
+};
+
+window.toggleCoachSecret = () => {
+  const f = document.getElementById('coach-secret-field');
+  const visible = f.style.display !== 'none';
+  f.style.display = visible ? 'none' : 'block';
+  if (!visible) document.getElementById('coach-secret-inp').focus();
+};
+
+window.checkCoachSecret = (val) => {
+  const hint = document.getElementById('coach-secret-hint');
+  if (val === COACH_SECRET) {
+    coachUnlocked = true;
+    document.getElementById('role-coach').style.display = 'block';
+    hint.textContent = '✓ Código correcto. Selecciona "Entrenador".';
+    hint.style.color = 'var(--accent)';
+    setRole('coach');
+  } else {
+    coachUnlocked = false;
+    document.getElementById('role-coach').style.display = 'none';
+    hint.style.color = 'var(--muted2)';
+    hint.textContent = 'Introduce el código para activar el rol de entrenador.';
+    if (selectedRole === 'coach') setRole('client');
+  }
 };
 
 // ── LOGIN ──
