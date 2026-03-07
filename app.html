@@ -2855,11 +2855,8 @@ window.submitNewClient = async function(){
   btnEl.disabled = true;
 
   try {
-    const session = await sb.auth.getSession();
-    const token = session.data.session?.access_token;
     const res = await sb.functions.invoke('create-client', {
       body: { full_name: name, email, password: pass },
-      headers: token ? { Authorization: 'Bearer ' + token } : {},
     });
     // Surfacear error real de la función (no el genérico del SDK)
     const data = res.data;
