@@ -721,9 +721,9 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
     <div class="sb-status">
       <div id="autosave-dot"></div>
       <div id="price-status-sidebar">💰 Precios...</div>
-      <span id="sb-price-refresh-wrap"><button class="btn ghost xs no-print" onclick="aiRefreshPrices(false)" title="Actualizar precios">↻</button></span>
+      
     </div>
-    <div id="api-key-status" style="padding:4px 10px 6px;font-size:10px;border-top:1px solid var(--border)"></div>
+    
     <div class="sb-user" onclick="confirmLogout()">
       <div class="sb-avatar" id="sb-avatar">?</div>
       <div style="flex:1;min-width:0">
@@ -854,13 +854,15 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
 
   <!-- COMPRA -->
   <div id="panel-compra" class="panel">
-    <!-- AI Status + controls -->
-    <div class="ai-status-bar no-print">
-      <div class="ai-status-dot" id="ai-price-dot"></div>
-      <span class="ai-status-text" id="price-status">Cargando precios...</span>
-      <span id="btn-ai-prices-wrap"><button class="btn gold xs" onclick="aiRefreshPrices(true)" id="btn-ai-prices" title="Actualizar precios con IA (1 vez al día)">✨ IA Precios</button></span>
-      <button class="btn ghost xs no-print" onclick="window.print()" title="Imprimir">🖨</button>
-      <button class="btn ghost xs no-print" onclick="resetChecked()" title="Desmarcar todo">↺ Reset</button>
+    <!-- Compra controls -->
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap" class="no-print">
+      <button class="btn ghost xs" onclick="window.print()" title="Imprimir">🖨 Imprimir</button>
+      <button class="btn ghost xs" onclick="resetChecked()">↺ Reset</button>
+      <button class="btn sm" id="btn-merc-fetch" onclick="fetchMercadonaPrices()" title="Busca precios reales en tienda.mercadona.es">
+        🟢 Actualizar precios Mercadona
+      </button>
+      <div id="merc-fetch-status" style="font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace"></div>
+      <button class="btn ghost xs" onclick="openPriceEditor()" style="margin-left:auto">✏️ Editar precios</button>
     </div>
     <!-- Totals per supermarket -->
     <div class="price-total-bar" id="price-total-bar">
@@ -1211,8 +1213,7 @@ const SUPABASE_URL  = 'https://nbvfrumnvpnlzawrfjen.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_5aAdITi_TZ9XptWj6vwaKQ_Lz8Oaqyr';
 const RAPIDAPI_KEY  = '';
 
-// API key se carga desde Supabase app_settings — nunca hardcodeada aquí
-let ANTHROPIC_KEY = '';
+// Precios editados manualmente por el coach
 
 const SUPERS = ['merc','lidl','carrefour','dia','eroski'];
 const SUPER_LABELS = {merc:'Mercadona',lidl:'Lidl',carrefour:'Carrefour',dia:'Dia',eroski:'Eroski'};
@@ -1452,19 +1453,9 @@ async function boot() {
       loadPublishedFeedback();
     }
 
-    // Non-critical loads — errors here no bloquean el app
+    // Non-critical loads
     setLoadText('Finalizando...');
-    await Promise.allSettled([
-      loadExLibrary(),
-      loadApiSettings(),
-    ]);
-    renderApiKeyStatus();
-    // Hide price editing buttons for clients
-    const isCoachRole = currentProfile?.role === 'coach';
-    const aiBtnWrap = document.getElementById('btn-ai-prices-wrap');
-    if(aiBtnWrap) aiBtnWrap.style.display = isCoachRole ? '' : 'none';
-    const sbRefreshWrap = document.getElementById('sb-price-refresh-wrap');
-    if(sbRefreshWrap) sbRefreshWrap.style.display = isCoachRole ? '' : 'none';
+    await Promise.allSettled([loadExLibrary()]);
     await checkPrices();
 
   }catch(err){
@@ -2679,238 +2670,239 @@ window.saveNotesToServer=saveNotesToServer;
 window.saveCoachFeedback=saveCoachFeedback;
 
 // ══════════════════════════════════════════════════════
-//  API SETTINGS (carga Anthropic key desde Supabase)
+//  MERCADONA PRICE FETCHER
 // ══════════════════════════════════════════════════════
-let SUPABASE_SERVICE_KEY_STORED = '';
 
-async function loadApiSettings(){
-  try{
-    // Coach: load own settings. Client: load coach's settings (shared API key)
-    const ownerId = currentProfile?.role === 'coach'
-      ? currentUser.id
-      : currentProfile?.coach_id;
-    if(!ownerId) return;
-    const {data,error}=await sb.from('app_settings')
-      .select('anthropic_key,rapidapi_key,supabase_service_key')
-      .eq('user_id', ownerId).maybeSingle();
-    if(error)throw error;
-    if(data?.anthropic_key) ANTHROPIC_KEY=data.anthropic_key;
-    if(data?.supabase_service_key) SUPABASE_SERVICE_KEY_STORED=data.supabase_service_key;
-  }catch(e){
-    console.warn('No se pudo cargar app_settings:',e.message);
+// Proxy CORS — allorigins.win como principal, corsproxy.io como fallback
+async function fetchWithProxy(url) {
+  const proxies = [
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  ];
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy, { signal: AbortSignal.timeout(6000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+      // allorigins wraps in {contents: "..."}
+      const raw = data.contents ?? data;
+      return typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch(e) { continue; }
   }
+  throw new Error('No se pudo conectar con ningún proxy CORS');
 }
 
-async function saveApiKey(key){
-  key=key.trim();
-  if(!key||!key.startsWith('sk-ant')){toast('⚠ Key inválida — debe empezar por sk-ant');return false;}
-  try{
-    const {error}=await sb.from('app_settings').upsert(
-      {user_id:currentUser.id,anthropic_key:key,updated_at:new Date().toISOString()},
-      {onConflict:'user_id'}
-    );
-    if(error)throw error;
-    ANTHROPIC_KEY=key;
-    toast('✓ API key guardada en Supabase');
-    renderApiKeyStatus();
-    return true;
-  }catch(e){
-    toast('Error guardando key: '+e.message);
-    return false;
+// Search Mercadona for a product, return best matching price {unit_price, base, name}
+async function searchMercadona(query) {
+  const url = `https://tienda.mercadona.es/api/search/?query=${encodeURIComponent(query)}&lang=es&wh=vlc1`;
+  const data = await fetchWithProxy(url);
+
+  // Response: { results: { products: [...] } }  OR  { products: [...] }
+  const products = data?.results?.products ?? data?.products ?? [];
+  if (!products.length) return null;
+
+  // Score candidates: prefer products whose name contains query words
+  const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const scored = products.map(p => {
+    const name = (p.display_name || '').toLowerCase();
+    const matches = words.filter(w => name.includes(w)).length;
+    const pi = p.price_instructions || {};
+    const price = parseFloat(pi.unit_price ?? pi.bulk_price ?? 0);
+    return { name: p.display_name, price, base: pi.reference_format || '1ud', matches, pi };
+  });
+
+  // Sort: most word matches first, then cheapest
+  scored.sort((a, b) => b.matches - a.matches || a.price - b.price);
+  const best = scored[0];
+  if (!best || best.price <= 0) return null;
+
+  // Build base unit from reference_format (e.g. "1 kg" → "kg", "500 g" → "500g")
+  const refFmt = best.pi.reference_format || '';
+  const baseMatch = refFmt.match(/^([\d.,]+)\s*(g|kg|ml|L|ud|u\.?)?/i);
+  let base = best.pi.size_format || refFmt || '1ud';
+  if (baseMatch) {
+    const qty = parseFloat(baseMatch[1].replace(',','.'));
+    const unit = (baseMatch[2] || 'ud').toLowerCase().replace('u.','ud');
+    base = qty === 1 ? `1${unit}` : `${qty}${unit}`;
   }
+
+  return { name: best.name, price: best.price, base };
 }
 
-async function saveServiceKey(key){
-  key=key.trim();
-  if(!key||!key.startsWith('eyJ')){toast('⚠ Key inválida — debe empezar por eyJ');return false;}
-  try{
-    const {error}=await sb.from('app_settings').upsert(
-      {user_id:currentUser.id,supabase_service_key:key,updated_at:new Date().toISOString()},
-      {onConflict:'user_id'}
-    );
-    if(error)throw error;
-    SUPABASE_SERVICE_KEY_STORED=key;
-    toast('✓ Service key guardada');
-    renderApiKeyStatus();
-    return true;
-  }catch(e){
-    toast('Error guardando service key: '+e.message);
-    return false;
-  }
-}
+// Main: fetch all diet products from Mercadona
+window.fetchMercadonaPrices = async () => {
+  if (!isCoachView()) { toast('Solo el entrenador puede actualizar precios'); return; }
 
-function renderApiKeyStatus(){
-  const el=document.getElementById('api-key-status');
-  if(!el)return;
-  const isCoach = currentProfile?.role==='coach';
+  const btn = document.getElementById('btn-merc-fetch');
+  const status = document.getElementById('merc-fetch-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Buscando...';
 
-  let html='';
-  // Anthropic key
-  if(ANTHROPIC_KEY){
-    const masked='sk-ant-...'+ANTHROPIC_KEY.slice(-6);
-    html+=`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
-      <span style="color:var(--accent);font-size:10px">✓ Anthropic</span>
-      <span style="color:var(--muted2);font-size:9px">${masked}</span>
-      ${isCoach?`<button class="btn ghost xs" onclick="promptChangeApiKey()">✎</button>`:''}
-    </div>`;
-  }else{
-    if(isCoach){
-      html+=`<div style="margin-bottom:3px"><span style="color:var(--red);font-size:10px">⚠ Sin Anthropic key</span> <button class="btn gold xs" onclick="promptChangeApiKey()">Añadir</button></div>`;
-    }else{
-      html+=`<div style="margin-bottom:3px"><span style="color:var(--orange);font-size:10px">⚠ Tu entrenador no tiene API key</span></div>`;
-    }
-  }
-  // Service key — solo visible para coach
-  if(isCoach){
-    if(SUPABASE_SERVICE_KEY_STORED){
-      const masked2='eyJ...'+SUPABASE_SERVICE_KEY_STORED.slice(-6);
-      html+=`<div style="display:flex;align-items:center;gap:5px">
-        <span style="color:var(--accent);font-size:10px">✓ Service key</span>
-        <span style="color:var(--muted2);font-size:9px">${masked2}</span>
-        <button class="btn ghost xs" onclick="promptChangeServiceKey()">✎</button>
-      </div>`;
-    }else{
-      html+=`<div><span style="color:var(--orange);font-size:10px">⚠ Sin service key</span> <button class="btn ghost xs" onclick="promptChangeServiceKey()" title="Necesaria para crear clientes">Añadir</button></div>`;
-    }
-  }
-  el.innerHTML=html;
-}
+  const products = getCompraList().map(i => i.p);
+  let ok = 0, fail = 0;
 
-window.promptChangeApiKey=async()=>{
-  const k=prompt('Pega tu Anthropic API key (sk-ant-api03-...):');
-  if(k)await saveApiKey(k);
-};
-
-window.promptChangeServiceKey=async()=>{
-  const k=prompt('Pega tu Supabase Service Role Key (eyJ...):\n\nDónde encontrarla: supabase.com → tu proyecto → Settings → API → service_role');
-  if(k)await saveServiceKey(k);
-};
-
-
-const AI_PRICE_CACHE_KEY = 'nc_ai_prices_cache';
-
-function setPriceStatus(msg, state=''){
-  const el=document.getElementById('price-status');
-  const elSb=document.getElementById('price-status-sidebar');
-  const dot=document.getElementById('ai-price-dot');
-  if(el) el.textContent=msg;
-  if(elSb) elSb.textContent=msg;
-  if(dot){dot.className='ai-status-dot';if(state)dot.classList.add(state);}
-}
-
-async function checkPrices(){
-  // Try to load cached AI prices first
-  try{
-    const cached=localStorage.getItem(AI_PRICE_CACHE_KEY);
-    if(cached){
-      const {date,data}=JSON.parse(cached);
-      const today=new Date().toISOString().slice(0,10);
-      if(date===today&&data){
-        Object.entries(data).forEach(([k,v])=>{PRICES[k]={...(PRICES[k]||{}),...v};});
-        const n=Object.keys(data).length;
-        setPriceStatus(`✓ Precios IA actualizados hoy (${n} productos)`, 'ok');
-        renderCompra();
+  for (let i = 0; i < products.length; i++) {
+    const p = products[i];
+    status.textContent = `(${i+1}/${products.length}) ${p}...`;
+    try {
+      const result = await searchMercadona(p);
+      if (result) {
+        if (!PRICES[p]) PRICES[p] = {};
+        PRICES[p].merc = result.price;
+        PRICES[p].base = PRICES[p].base || result.base;
+        ok++;
+      } else {
+        fail++;
+      }
+    } catch(e) {
+      console.warn('Mercadona fetch error for', p, e);
+      fail++;
+      // If first product already fails, proxy might be down
+      if (i === 0 && fail >= 1) {
+        status.textContent = '⚠ No se pudo conectar con Mercadona. Prueba más tarde.';
+        btn.disabled = false;
+        btn.textContent = '🟢 Actualizar precios Mercadona';
+        toast('⚠ Error de conexión con Mercadona.es');
         return;
       }
     }
-  }catch(e){}
-  const n=Object.keys(PRICES).length;
-  setPriceStatus(`${n} productos (precios base). Pulsa ✨ para actualizar con IA.`,'ok');
+    // Small delay to avoid rate limiting
+    await new Promise(r => setTimeout(r, 400));
+  }
+
+  // Save to Supabase
+  const coachId = currentProfile?.role==='coach' ? currentUser?.id : currentProfile?.coach_id;
+  if (coachId) {
+    const rows = Object.entries(PRICES).map(([product,v])=>({
+      coach_id:coachId, product,
+      merc:v.merc??null, lidl:v.lidl??null,
+      carrefour:v.carrefour??null, dia:v.dia??null, eroski:v.eroski??null,
+      base_unit:v.base||'ud', updated_at:new Date().toISOString()
+    }));
+    try { await sb.from('prices').upsert(rows,{onConflict:'coach_id,product'}); flash(); }
+    catch(e) { console.warn('prices save:', e); }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🟢 Actualizar precios Mercadona';
+  status.textContent = `✓ ${ok} actualizados${fail ? `, ${fail} no encontrados` : ''}`;
+  renderCompra();
+  toast(`✓ Mercadona: ${ok} precios actualizados`);
+};
+
+// ══════════════════════════════════════════════════════
+//  PRICE EDITOR (manual, coach only)
+// ══════════════════════════════════════════════════════
+function setPriceStatus(msg, state=''){
+  // kept for compat, no-op now
+}
+async function checkPrices(){
   renderCompra();
 }
+window.aiRefreshPrices = async () => {
+  toast('💡 Usa el botón "✏️ Editar precios" para actualizar precios manualmente');
+};
 
-async function aiRefreshPrices(force=false){
-  // Check cache unless forced
-  if(!force){
+window.openPriceEditor = () => {
+  if(!isCoachView()){ toast('Solo el entrenador puede editar precios'); return; }
+  const products = getCompraList().map(i=>i.p);
+  const extraProds = Object.keys(PRICES).filter(k=>!products.includes(k)).slice(0,20);
+  const allProds = [...new Set([...products,...extraProds])].sort();
+
+  const supers = ['merc','lidl','carrefour','dia','eroski'];
+  const superNames = {merc:'Mercadona',lidl:'Lidl',carrefour:'Carrefour',dia:'Dia',eroski:'Eroski'};
+
+  const rows = allProds.map(p => {
+    const pr = PRICES[p] || {};
+    const cells = supers.map(s =>
+      `<td><input type="number" min="0" step="0.01" value="${pr[s]??''}" placeholder="—"
+        style="width:68px;padding:4px 5px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace"
+        data-product="${p}" data-super="${s}" onchange="priceEditorChange(this)"></td>`
+    ).join('');
+    const base = pr.base || '100g';
+    return `<tr>
+      <td style="font-family:'Syne',sans-serif;font-weight:600;font-size:11px;padding:4px 8px;white-space:nowrap">${p}</td>
+      <td><input type="text" value="${base}" placeholder="100g"
+        style="width:58px;padding:4px 5px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--muted2);font-size:10px"
+        data-product="${p}" data-super="base" onchange="priceEditorChange(this)"></td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'price-editor-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:min(820px,96vw);box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px">✏️ Editor de precios</div>
+          <div style="font-size:10px;color:var(--muted2);margin-top:2px">Precio por envase/unidad indicada en "Base". Deja vacío si no disponible.</div>
+        </div>
+        <button onclick="closePriceEditor()" style="background:none;border:none;color:var(--muted2);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
+      </div>
+      <div style="padding:14px 20px;overflow-x:auto">
+        <table style="border-collapse:collapse;width:100%">
+          <thead><tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:6px 8px;font-family:'Syne',sans-serif;font-size:10px;color:var(--muted2)">Producto</th>
+            <th style="text-align:left;padding:6px 8px;font-family:'Syne',sans-serif;font-size:10px;color:var(--muted2)">Base</th>
+            ${supers.map(s=>`<th style="text-align:center;padding:6px 8px;font-family:'Syne',sans-serif;font-size:10px;color:var(--accent)">${superNames[s]}</th>`).join('')}
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost" onclick="addPriceRow()">+ Añadir producto</button>
+        <button class="btn" onclick="savePricesAndClose()">💾 Guardar precios</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) closePriceEditor(); });
+};
+
+window.priceEditorChange = (inp) => {
+  const p = inp.dataset.product;
+  const s = inp.dataset.super;
+  if(!PRICES[p]) PRICES[p] = {};
+  if(s==='base'){
+    PRICES[p].base = inp.value.trim() || '100g';
+  } else {
+    const v = parseFloat(inp.value);
+    PRICES[p][s] = isNaN(v) ? null : v;
+  }
+};
+
+window.addPriceRow = () => {
+  const name = prompt('Nombre del producto (debe coincidir con el ingrediente):');
+  if(!name) return;
+  const k = name.toLowerCase().trim();
+  if(!PRICES[k]) PRICES[k] = {base:'100g'};
+  closePriceEditor();
+  openPriceEditor();
+};
+
+window.savePricesAndClose = async () => {
+  closePriceEditor();
+  // Save to Supabase
+  const coachId = currentProfile?.role==='coach' ? currentUser?.id : currentProfile?.coach_id;
+  if(coachId){
+    const rows = Object.entries(PRICES).map(([product,v])=>({
+      coach_id:coachId, product,
+      merc:v.merc??null, lidl:v.lidl??null,
+      carrefour:v.carrefour??null, dia:v.dia??null, eroski:v.eroski??null,
+      base_unit:v.base||'ud', updated_at:new Date().toISOString()
+    }));
     try{
-      const cached=localStorage.getItem(AI_PRICE_CACHE_KEY);
-      if(cached){
-        const {date,data}=JSON.parse(cached);
-        if(date===new Date().toISOString().slice(0,10)&&data){
-          Object.entries(data).forEach(([k,v])=>{PRICES[k]={...(PRICES[k]||{}),...v};});
-          setPriceStatus(`✓ Precios IA del día (${Object.keys(data).length} productos)`,'ok');
-          renderCompra();return;
-        }
-      }
-    }catch(e){}
+      await sb.from('prices').upsert(rows,{onConflict:'coach_id,product'});
+      flash(); toast('✓ Precios guardados');
+    }catch(e){ toast('Error guardando: '+e.message); }
   }
-  if(!ANTHROPIC_KEY){
-    setPriceStatus('⚠ Configura tu API key de Anthropic','error');
-    toast('Sin API key — pulsa "Añadir key" en la barra de estado');
-    renderApiKeyStatus();
-    return;
-  }
-  const btn=document.getElementById('btn-ai-prices');
-  if(btn){btn.disabled=true;btn.textContent='⏳ Cargando...';}
-  setPriceStatus('🤖 Consultando precios con IA...','loading');
-  try{
-    // Get all products to price (diet + DB)
-    const allProducts=[...new Set([...getCompraList().map(i=>i.p),...Object.keys(DB)])].slice(0,70);
+  renderCompra();
+};
 
-    // Call Anthropic directly with the stored key
-    const aiRes = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':ANTHROPIC_KEY,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-haiku-4-5-20251001',
-        max_tokens:2000,
-        messages:[{role:'user',content:`Eres un asistente de precios de supermercados en España.
-Devuelve SOLO un JSON con precios estimados actuales (2024-2025) para los siguientes productos en Mercadona, Lidl, Aldi, Carrefour y Dia.
-Formato: {"producto":{"mercadona":precio,"lidl":precio,"aldi":precio,"carrefour":precio,"dia":precio,"base":"cantidad"},...}
-Usa null si el producto no está disponible en ese super.
-Productos: ${allProducts.join(', ')}
-IMPORTANTE: Responde SOLO con el JSON sin markdown.`}]
-      })
-    });
-    if(!aiRes.ok) throw new Error('Anthropic API error: '+aiRes.status);
-    const apiData = await aiRes.json();
-    const text=apiData.content?.find(b=>b.type==='text')?.text||'{}';
-    const clean=text.replace(/```json|```/g,'').trim();
-    const freshPrices=JSON.parse(clean);
-    // Merge into PRICES (map new AI keys → existing super keys)
-    const KEY_MAP={'mercadona':'merc','lidl':'lidl','aldi':'aldi','carrefour':'carrefour','dia':'dia','eroski':'eroski'};
-    let count=0;
-    Object.entries(freshPrices).forEach(([k,v])=>{
-      if(typeof v==='object'&&v!==null){
-        const mapped={};
-        Object.entries(v).forEach(([sk,price])=>{
-          if(sk==='base') mapped.base=price;
-          else mapped[KEY_MAP[sk]||sk]=price;
-        });
-        PRICES[k]={...(PRICES[k]||{}),...mapped};count++;
-      }
-    });
-    // Cache for today
-    localStorage.setItem(AI_PRICE_CACHE_KEY,JSON.stringify({date:new Date().toISOString().slice(0,10),data:freshPrices}));
-    // Save to Supabase
-    const coachId=currentProfile?.role==='coach'?currentUser?.id:currentProfile?.coach_id;
-    if(coachId){
-      const rows=Object.entries(PRICES).map(([product,v])=>({
-        coach_id:coachId,product,merc:v.merc??null,lidl:v.lidl??null,
-        carrefour:v.carrefour??null,dia:v.dia??null,eroski:v.eroski??null,
-        base_unit:v.base||'ud',updated_at:new Date().toISOString()
-      }));
-      (async()=>{try{await sb.from('prices').upsert(rows,{onConflict:'coach_id,product'});}catch(e){console.warn('prices upsert:',e);}})();
-    }
-    setPriceStatus(`✓ Precios IA actualizados — ${count} productos (${new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})})`,'ok');
-    toast(`✨ Precios actualizados: ${count} productos`);
-  }catch(e){
-    console.error('AI prices error:',e);
-    setPriceStatus('⚠ Error al obtener precios IA: '+e.message,'error');
-    toast('Error precios IA: '+e.message);
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='✨ IA Precios';}
-    renderCompra();
-  }
-}
-window.aiRefreshPrices=aiRefreshPrices;
-// Keep old name for backward compat
-window.refreshPrices=()=>aiRefreshPrices(true);
+window.closePriceEditor = () => {
+  document.getElementById('price-editor-modal')?.remove();
+};
 
 // ══════════════════════════════════════════════════════
 //  NAV + SIDEBAR
