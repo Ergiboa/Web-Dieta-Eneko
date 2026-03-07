@@ -644,7 +644,7 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
 
 <!-- App Loading -->
 <div id="app-loading">
-  <div class="load-mark">NC</div>
+  <div class="load-mark">EF</div>
   <span id="load-text">Iniciando Efitnesskokus...</span>
 </div>
 
@@ -2605,22 +2605,18 @@ function renderExBlock(rid,ex,ei,log,coach){
     const prevSet=(prevLog&&prevLog.sets&&prevLog.sets[si])||{};
     const isDone=logSet.done||false;
     const prevW=prevSet.weight?`${prevSet.weight}kg`:'—';
-    const prevR=prevSet.reps||'—';
+    const prevR=prevSet.reps||set.reps||'—';
     return`<div class="set-row" id="setrow-${rid}-${ex.id}-${si}">
       <span class="set-num">${si+1}</span>
-      ${coach
-        ? `<input class="set-inp struct-readonly" type="text" value="${set.weight||'—'}" title="Peso planificado">`
-        : `<input class="set-inp ${isDone?'done-val':''}" type="number" min="0" placeholder="${prevW}" value="${logSet.weight||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'weight',this.value)" title="Peso (kg)">`}
-      <input class="set-inp ${coach?'struct-readonly':isDone?'done-val':''}" type="${coach?'text':'number'}" min="0" ${coach?`value="${set.reps||'—'}" title="Reps planificadas"`:`placeholder="${prevR}" value="${logSet.reps||set.reps||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'reps',this.value)" title="Reps"`}>
-      <input class="set-inp ${coach?'struct-readonly':''}" type="text" ${coach?`value="${set.time||'—'}" title="Tiempo"`:`placeholder="—" value="${logSet.time||set.time||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'time',this.value)" title="Tiempo"`}>
-      ${coach
-        ? `<span style="color:var(--muted2);font-size:9px;text-align:center">—</span>`
-        : `<input type="checkbox" class="set-cb" ${isDone?'checked':''} onchange="logSetDone('${rid}','${ex.id}',${si},this.checked)">`}
+      <input class="set-inp ${isDone?'done-val':''}" type="number" min="0" placeholder="${prevW}" value="${logSet.weight||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'weight',this.value)" title="Peso (kg)">
+      <input class="set-inp ${isDone?'done-val':''}" type="number" min="0" placeholder="${prevR}" value="${logSet.reps||set.reps||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'reps',this.value)" title="Reps">
+      <input class="set-inp" type="text" placeholder="—" value="${logSet.time||set.time||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'time',this.value)" title="Tiempo">
+      <input type="checkbox" class="set-cb" ${isDone?'checked':''} onchange="logSetDone('${rid}','${ex.id}',${si},this.checked)">
       ${coach?`<button class="set-del" onclick="delSet('${rid}',${ei},${si})">×</button>`:`<span></span>`}
     </div>`;
   }).join('');
   const rpeVal=exLog.rpe||0;
-  const rpeBtns=!coach?[...Array(10)].map((_,i)=>`<button class="rpebtn ${rpeVal===i+1?'on':''}" onclick="logRpe('${rid}','${ex.id}',${i+1})">${i+1}</button>`).join(''):'';
+  const rpeBtns=[...Array(10)].map((_,i)=>`<button class="rpebtn ${rpeVal===i+1?'on':''}" onclick="logRpe('${rid}','${ex.id}',${i+1})">${i+1}</button>`).join('');
   return`<div class="exblock" id="exblock-${rid}-${ex.id}">
     <div class="exblock-head">
       <input class="ex-name-inp" type="text" value="${ex.name}" placeholder="Nombre" ${coach?`onchange="updateExName('${rid}',${ei},this.value)"`:' readonly'}>
