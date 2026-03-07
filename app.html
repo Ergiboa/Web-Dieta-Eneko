@@ -2861,9 +2861,10 @@ window.submitNewClient = async function(){
       body: { full_name: name, email, password: pass },
       headers: token ? { Authorization: 'Bearer ' + token } : {},
     });
-    if(res.error) throw new Error(res.error.message || JSON.stringify(res.error));
+    // Surfacear error real de la función (no el genérico del SDK)
     const data = res.data;
     if(data?.error) throw new Error(data.error);
+    if(res.error) throw new Error(data?.message || data?.error || res.error.message || JSON.stringify(res.error));
 
     // Añadir al selector y seleccionar el nuevo cliente
     const newClient = data.client;
