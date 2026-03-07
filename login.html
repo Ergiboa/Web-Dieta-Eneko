@@ -231,15 +231,15 @@ option{background:var(--card)}
       </button>
     </div>
 
-    <!-- REGISTER -->
+    <!-- REGISTER — client only -->
     <div id="form-register" style="display:none">
       <div class="form-title">Crear cuenta</div>
-      <div class="form-desc">Elige tu rol antes de registrarte.</div>
+      <div class="form-desc">Regístrate como cliente. Tu entrenador te configurará la dieta y rutinas.</div>
       <div class="err-msg" id="reg-err"></div>
       <div class="ok-msg"  id="reg-ok"></div>
       <div class="field">
         <label>Nombre completo</label>
-        <input type="text" id="reg-name" placeholder="Nombre Apellido">
+        <input type="text" id="reg-name" placeholder="Nombre Apellido" autocomplete="name">
       </div>
       <div class="field">
         <label>Email</label>
@@ -249,35 +249,11 @@ option{background:var(--card)}
         <label>Contraseña (mínimo 8 caracteres)</label>
         <input type="password" id="reg-pass" placeholder="••••••••" autocomplete="new-password">
       </div>
-      <!-- Código secreto de entrenador (oculto por defecto) -->
-      <div class="field" id="coach-secret-field" style="display:none">
-        <label>Código de entrenador</label>
-        <input type="password" id="coach-secret-inp" placeholder="••••••••"
-          oninput="checkCoachSecret(this.value)">
-        <div id="coach-secret-hint" style="font-size:10px;color:var(--muted2);margin-top:4px">Introduce el código para activar el rol de entrenador.</div>
-      </div>
       <div class="field">
-        <label>
-          Tipo de cuenta
-          <span id="unlock-coach-link"
-            style="float:right;font-size:9px;color:var(--muted);cursor:pointer;text-decoration:underline;letter-spacing:.5px"
-            onclick="toggleCoachSecret()">¿Eres entrenador?</span>
-        </label>
-        <div class="role-select">
-          <div class="role-opt" id="role-coach" style="display:none" onclick="setRole('coach')">
-            <span class="ri">👨‍💼</span>
-            <span class="rn">Entrenador</span>
-          </div>
-          <div class="role-opt active" id="role-client" onclick="setRole('client')">
-            <span class="ri">🏋️</span>
-            <span class="rn">Cliente</span>
-          </div>
-        </div>
-      </div>
-      <!-- Email del entrenador para clientes -->
-      <div class="field" id="coach-code-field" style="display:block">
-        <label>Email del entrenador</label>
-        <input type="email" id="reg-coach-email" placeholder="entrenador@email.com">
+        <label>Usuario del entrenador</label>
+        <input type="text" id="reg-coach-username" placeholder="ej: ekaitz_ruiz"
+          autocomplete="off" onkeydown="if(event.key==='Enter')doRegister()">
+        <div style="font-size:10px;color:var(--muted2);margin-top:4px">Tu entrenador te dará este nombre de usuario.</div>
       </div>
       <button class="submit-btn" id="reg-btn" onclick="doRegister()">
         <span id="reg-txt">Crear cuenta</span>
@@ -316,50 +292,7 @@ window.switchTab = (tab) => {
   document.getElementById('tab-register').classList.toggle('active', tab==='register');
 };
 
-// ══════════════════════════════════════════════════════
-//  🔑 CÓDIGO SECRETO DE ENTRENADOR — Cámbialo por el tuyo
-// ══════════════════════════════════════════════════════
-const COACH_SECRET = 'Enekokus2026*';   // ← Pon aquí tu código secreto
-
-// ── Role selection ──
-let selectedRole = 'client';
-let coachUnlocked = false;
-
-window.setRole = (role) => {
-  if (role === 'coach' && !coachUnlocked) return;
-  selectedRole = role;
-  document.getElementById('role-coach').classList.toggle('active',  role==='coach');
-  document.getElementById('role-client').classList.toggle('active', role==='client');
-  // Solo pedir email del entrenador si es cliente
-  document.getElementById('coach-code-field').style.display = role==='client' ? 'block' : 'none';
-  // El campo de email no es obligatorio para entrenador
-  document.getElementById('reg-coach-email').required = role==='client';
-};
-
-window.toggleCoachSecret = () => {
-  const f = document.getElementById('coach-secret-field');
-  const visible = f.style.display !== 'none';
-  f.style.display = visible ? 'none' : 'block';
-  if (!visible) document.getElementById('coach-secret-inp').focus();
-};
-
-window.checkCoachSecret = (val) => {
-  const hint = document.getElementById('coach-secret-hint');
-  if (val === COACH_SECRET) {
-    coachUnlocked = true;
-    document.getElementById('role-coach').style.display = 'block';
-    hint.textContent = '✓ Código correcto.';
-    hint.style.color = 'var(--accent)';
-    setRole('coach');
-    document.getElementById('coach-code-field').style.display = 'none';
-  } else {
-    coachUnlocked = false;
-    document.getElementById('role-coach').style.display = 'none';
-    hint.style.color = 'var(--muted2)';
-    hint.textContent = 'Introduce el código para activar el rol de entrenador.';
-    if (selectedRole === 'coach') setRole('client');
-  }
-};
+// Client-only registration — coaches are added directly from Supabase
 
 // ── LOGIN ──
 window.doLogin = async () => {
@@ -387,54 +320,66 @@ window.doLogin = async () => {
   }
 };
 
-// ── REGISTER ──
+// ── REGISTER (client only) ──
 window.doRegister = async () => {
-  const name  = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass  = document.getElementById('reg-pass').value;
-  const coachEmail = document.getElementById('reg-coach-email').value.trim();
+  const name         = document.getElementById('reg-name').value.trim();
+  const email        = document.getElementById('reg-email').value.trim();
+  const pass         = document.getElementById('reg-pass').value;
+  const coachUsername = document.getElementById('reg-coach-username').value.trim();
   const errEl = document.getElementById('reg-err');
   const okEl  = document.getElementById('reg-ok');
   errEl.classList.remove('show'); okEl.classList.remove('show');
 
   if (!name || !email || !pass) { errEl.textContent='Rellena todos los campos'; errEl.classList.add('show'); return; }
   if (pass.length < 8) { errEl.textContent='La contraseña debe tener mínimo 8 caracteres'; errEl.classList.add('show'); return; }
-  if (selectedRole==='client' && !coachEmail) { errEl.textContent='Introduce el email de tu entrenador'; errEl.classList.add('show'); return; }
-  if (selectedRole==='coach' && !coachUnlocked) { errEl.textContent='Código de entrenador incorrecto'; errEl.classList.add('show'); return; }
+  if (!coachUsername) { errEl.textContent='Introduce el username de tu entrenador'; errEl.classList.add('show'); return; }
 
   setLoading('reg', true);
 
-  // Find coach if client
-  let coachId = null;
-  if (selectedRole === 'client' && coachEmail) {
-    const { data: coachProfile } = await supabase
-      .from('profiles').select('id').eq('email', coachEmail).eq('role','coach').single();
-    if (!coachProfile) {
+  // Find coach by username field
+  const { data: coachProfile, error: coachErr } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('username', coachUsername.toLowerCase())
+    .eq('role','coach')
+    .maybeSingle();
+
+  if (!coachProfile) {
+    // Fallback: try matching by email prefix or full_name
+    const { data: coachByEmail } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('role','coach')
+      .ilike('email', coachUsername+'%')
+      .maybeSingle();
+    if(!coachByEmail){
       setLoading('reg', false);
-      errEl.textContent = 'No se encontró ningún entrenador con ese email';
+      errEl.textContent = 'No se encontró ningún entrenador con ese usuario. Pídele que te lo confirme.';
       errEl.classList.add('show'); return;
     }
-    coachId = coachProfile.id;
+    var coachId = coachByEmail.id;
+  } else {
+    var coachId = coachProfile.id;
   }
 
   const { data, error } = await supabase.auth.signUp({
     email, password: pass,
-    options: { data: { full_name: name, role: selectedRole } }
+    options: { data: { full_name: name, role: 'client' } }
   });
 
   if (error) {
     setLoading('reg', false);
-    errEl.textContent = error.message;
+    errEl.textContent = error.message === 'User already registered' ? 'Este email ya está registrado' : error.message;
     errEl.classList.add('show'); return;
   }
 
   // Link client to coach
-  if (selectedRole === 'client' && coachId && data.user) {
+  if (coachId && data.user) {
     await supabase.from('profiles').update({ coach_id: coachId }).eq('id', data.user.id);
   }
 
   setLoading('reg', false);
-  okEl.textContent = '✓ Cuenta creada. Revisa tu email para confirmar.';
+  okEl.textContent = '✓ Cuenta creada correctamente. Ya puedes iniciar sesión.';
   okEl.classList.add('show');
 };
 

@@ -615,6 +615,11 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
 #toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));right:18px;background:var(--accent);color:#08090a;padding:8px 15px;border-radius:7px;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;opacity:0;transform:translateY(8px);transition:all .22s;pointer-events:none;z-index:999;max-width:calc(100vw - 36px)}
 #toast.show{opacity:1;transform:translateY(0)}
 
+.super-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--card);font-family:'Syne',sans-serif;font-weight:700;font-size:10px;cursor:pointer;transition:all .15s;user-select:none}
+.super-chip:hover{border-color:var(--muted)}
+.super-chip.active{border-color:var(--accent2);color:var(--accent2);background:rgba(79,242,194,.07)}
+.add-super-btn{background:none;border:1px dashed var(--border);color:var(--muted);padding:4px 10px;border-radius:5px;font-family:'Syne',sans-serif;font-weight:700;font-size:10px;cursor:pointer;transition:all .15s}
+.add-super-btn:hover{border-color:var(--accent);color:var(--accent)}
 /* ── PRINT ── */
 @media print{
   #sidebar,#mobile-header,#sidebar-overlay,#gif-modal,#toast,.toolbar,.btn,.super-tabs,.no-print{display:none!important}
@@ -687,6 +692,7 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
     <div class="nav-sep"></div>
     <div class="nav-item coach-only-nav" data-tab="ejercicios"><span class="nav-icon">🎬</span>Librería GIFs</div>
     <div class="nav-item" data-tab="notas"><span class="nav-icon">📝</span>Notas</div>
+    <div class="nav-item" data-tab="perfil"><span class="nav-icon">👤</span>Mi perfil</div>
   </nav>
 
   <div class="sb-bottom">
@@ -826,41 +832,24 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
 
   <!-- COMPRA -->
   <div id="panel-compra" class="panel">
-    <!-- AI Status + controls -->
-    <div class="ai-status-bar no-print">
-      <div class="ai-status-dot" id="ai-price-dot"></div>
-      <span class="ai-status-text" id="price-status">Cargando precios...</span>
+    <!-- Controls -->
+    <div class="ai-status-bar no-print" style="margin-bottom:8px">
+      <span class="ai-status-text" id="price-status">✓ Precios listos</span>
       <span id="btn-ai-prices-wrap"><button class="btn gold xs" onclick="aiRefreshPrices(true)" id="btn-ai-prices" title="Actualizar precios con IA (1 vez al día)">✨ IA Precios</button></span>
       <button class="btn ghost xs no-print" onclick="window.print()" title="Imprimir">🖨</button>
       <button class="btn ghost xs no-print" onclick="resetChecked()" title="Desmarcar todo">↺ Reset</button>
     </div>
-    <!-- Totals per supermarket -->
-    <div class="price-total-bar" id="price-total-bar">
-      <div class="price-box"><div class="pb-label">💰 Mejor total</div><div class="pb-val" id="total-global">—</div></div>
-      <div class="price-box"><div class="pb-label">🟢 Mercadona</div><div class="pb-val" id="total-merc" style="color:var(--accent)">—</div></div>
-      <div class="price-box"><div class="pb-label">🔵 Lidl</div><div class="pb-val" id="total-lidl" style="color:var(--accent2)">—</div></div>
-      <div class="price-box"><div class="pb-label">🔷 Carrefour</div><div class="pb-val" id="total-carrefour" style="color:var(--blue)">—</div></div>
-      <div class="price-box"><div class="pb-label">🟠 Dia</div><div class="pb-val" id="total-dia" style="color:var(--orange)">—</div></div>
-      <div class="price-box"><div class="pb-label">🟣 Eroski</div><div class="pb-val" id="total-eroski" style="color:var(--purple)">—</div></div>
+    <!-- Dynamic supermarket chips -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">Supermercados:</span>
+      <div id="super-chips-wrap" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
     </div>
-    <!-- Filter -->
+    <!-- Dynamic totals bar -->
+    <div class="price-total-bar" id="price-total-bar"></div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap" class="no-print">
-      <div class="compra-filter">
-        <span style="font-size:11px">🔍</span>
-        <select id="super-dropdown" onchange="onSuperDropdown(this.value)"
-          style="flex:1;background:transparent;border:none;color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:11px;outline:none;cursor:pointer">
-          <option value="all">Todos los supermercados</option>
-          <option value="merc">🟢 Solo Mercadona</option>
-          <option value="lidl">🔵 Solo Lidl</option>
-          <option value="carrefour">🔷 Solo Carrefour</option>
-          <option value="dia">🟠 Solo Dia</option>
-          <option value="eroski">🟣 Solo Eroski</option>
-          <option value="pendientes">⚠ Sin precio</option>
-        </select>
-      </div>
       <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted2);cursor:pointer">
         <input type="checkbox" id="chk-solo-falta" onchange="renderCompra()" style="accent-color:var(--accent)">
-        Solo lo que falta
+        Solo lo que falta en stock
       </label>
     </div>
     <div class="table-scroll">
@@ -1152,6 +1141,61 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
       </div>
     </div>
   </div>
+  <!-- PERFIL -->
+  <div id="panel-perfil" class="panel">
+    <div class="sec">👤 MI PERFIL</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:720px">
+
+      <!-- Left: avatar, name, password, delete -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:18px;display:flex;flex-direction:column;gap:12px">
+
+        <!-- Avatar + name -->
+        <div style="display:flex;align-items:center;gap:12px">
+          <div id="profile-avatar-wrap" onclick="document.getElementById('avatar-file').click()"
+            style="width:64px;height:64px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#08090a;flex-shrink:0;cursor:pointer;overflow:hidden;position:relative">
+            <span id="profile-avatar-initials">?</span>
+            <img id="profile-avatar-img" src="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);font-size:9px;text-align:center;padding:2px;color:#fff">📷</div>
+          </div>
+          <input type="file" id="avatar-file" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+          <div style="flex:1;min-width:0">
+            <div style="font-family:'Syne',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:5px">Nombre</div>
+            <input id="profile-name-inp" type="text" placeholder="Tu nombre..."
+              style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none">
+          </div>
+        </div>
+        <button class="btn" onclick="saveProfileName()">💾 Guardar nombre</button>
+
+        <div style="height:1px;background:var(--border)"></div>
+
+        <div style="font-family:'Syne',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2)">Cambiar contraseña</div>
+        <input id="profile-newpass" type="password" placeholder="Nueva contraseña (mín. 8 caracteres)"
+          style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none">
+        <button class="btn ghost" onclick="changePassword()">🔑 Cambiar contraseña</button>
+
+        <div style="height:1px;background:var(--border)"></div>
+
+        <button class="btn danger" onclick="deleteAccount()" style="width:100%;justify-content:center">🗑 Eliminar mi cuenta</button>
+      </div>
+
+      <!-- Right: weight tracking -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:18px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:var(--accent3)">⚖️ SEGUIMIENTO DE PESO</div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <input id="weight-inp" type="number" min="30" max="300" step="0.1" placeholder="kg"
+            style="width:75px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:15px;outline:none;text-align:center"
+            onkeydown="if(event.key==='Enter')logWeight()">
+          <span style="color:var(--muted2);font-size:12px">kg</span>
+          <button class="btn sm" onclick="logWeight()" style="flex:1">+ Registrar</button>
+        </div>
+        <!-- Mini bar chart -->
+        <div id="weight-chart" style="display:flex;align-items:flex-end;gap:3px;min-height:90px;background:var(--card2);border-radius:7px;padding:8px;overflow-x:auto"></div>
+        <!-- Log list -->
+        <div id="weight-list" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+
+    </div>
+  </div>
 </div><!-- /app-main -->
 
 <script type="module">
@@ -1165,9 +1209,18 @@ const RAPIDAPI_KEY  = '';
 // API key se carga desde Supabase app_settings — nunca hardcodeada aquí
 let ANTHROPIC_KEY = '';
 
-const SUPERS = ['merc','lidl','carrefour','dia','eroski'];
-const SUPER_LABELS = {merc:'Mercadona',lidl:'Lidl',carrefour:'Carrefour',dia:'Dia',eroski:'Eroski'};
-const SUPER_COLORS = {merc:'var(--accent)',lidl:'var(--accent2)',carrefour:'var(--blue)',dia:'var(--orange)',eroski:'var(--purple)'};
+// Dynamic supermarkets — stored in localStorage per user
+let SUPERS = JSON.parse(localStorage.getItem('nc_supers') || JSON.stringify([
+  {key:'mercadona', label:'Mercadona'},
+  {key:'lidl',     label:'Lidl'},
+  {key:'aldi',     label:'Aldi'}
+]));
+// Helper to get keys/labels
+function superKeys(){ return SUPERS.map(s=>s.key); }
+function superLabel(k){ return (SUPERS.find(s=>s.key===k)||{label:k}).label; }
+const PALETTE=['var(--accent)','var(--accent2)','var(--orange)','var(--blue)','var(--purple)','var(--accent3)'];
+function superColor(k){ const i=SUPERS.findIndex(s=>s.key===k); return PALETTE[i%PALETTE.length]; }
+function saveSupers(){ localStorage.setItem('nc_supers',JSON.stringify(SUPERS)); }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -1366,20 +1419,55 @@ document.addEventListener('click', (e) => {
 //  BOOTSTRAP
 // ══════════════════════════════════════════════════════
 async function boot() {
+  // Anti-loop protection
+  const attempts = parseInt(sessionStorage.getItem('nc_boot_attempts')||'0') + 1;
+  sessionStorage.setItem('nc_boot_attempts', attempts);
+  if(attempts > 3){
+    sessionStorage.removeItem('nc_boot_attempts');
+    document.getElementById('app-loading').innerHTML = `
+      <div class="load-mark" style="background:var(--red)">!</div>
+      <p style="color:var(--red);font-size:13px;text-align:center;max-width:280px;margin:8px 0">
+        Error al conectar. La sesión puede haber expirado.
+      </p>
+      <button onclick="forceLogout()" style="background:var(--red);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:800;font-size:12px;cursor:pointer;margin-top:4px">
+        ↩ Volver al login
+      </button>`;
+    return;
+  }
+
   try{
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; return; }
+    const { data: { session }, error: sErr } = await sb.auth.getSession();
+    if (!session || sErr) {
+      sessionStorage.removeItem('nc_boot_attempts');
+      window.location.href = 'login.html'; return;
+    }
     currentUser = session.user;
 
     setLoadText('Cargando perfil...');
-    const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-    if (!profile) { window.location.href = 'login.html'; return; }
-    currentProfile = profile;
+    const { data: profile, error: pErr } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (!profile) {
+      // Trigger might be slow — try to create profile
+      const meta = currentUser.user_metadata || {};
+      await sb.from('profiles').upsert({
+        id: currentUser.id, email: currentUser.email,
+        full_name: meta.full_name || currentUser.email.split('@')[0],
+        role: meta.role || 'client'
+      }, {onConflict:'id'});
+      const { data: profile2 } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+      if (!profile2){ sessionStorage.removeItem('nc_boot_attempts'); window.location.href = 'login.html'; return; }
+      currentProfile = profile2;
+    } else {
+      currentProfile = profile;
+    }
+    sessionStorage.removeItem('nc_boot_attempts');
 
-    const isCoach = profile.role === 'coach';
-    document.getElementById('sb-username').textContent = profile.full_name || profile.email;
+    const isCoach = currentProfile.role === 'coach';
+    document.getElementById('sb-username').textContent = currentProfile.full_name || currentProfile.email;
     document.getElementById('sb-role').textContent     = isCoach ? '👨‍💼 Entrenador' : '🏋️ Cliente';
-    document.getElementById('sb-avatar').textContent   = (profile.full_name||profile.email||'?')[0].toUpperCase();
+    document.getElementById('sb-avatar').textContent   = (currentProfile.full_name||currentProfile.email||'?')[0].toUpperCase();
+    // Load avatar from localStorage
+    const _savedAvatar = localStorage.getItem('nc_avatar_'+currentUser.id);
+    if(_savedAvatar) applySidebarAvatar(_savedAvatar);
 
     if (isCoach) {
       document.getElementById('client-selector').style.display = 'block';
@@ -1952,6 +2040,7 @@ function renderRecipeEditor(){
   }
   const r=RECIPES.find(x=>x.id===currentRecipeId);
   if(!r)return;
+  const canEditRecipe = isCoachView();
 
   const ingsHtml=(r.items||[]).map((ing,idx)=>`
     <div class="rec-ing-row" id="rec-ing-${r.id}-${idx}">
@@ -2206,47 +2295,102 @@ function estCost(k,qty,u,s){
   const packs=(pu!=='ud'&&(u==='g'||u==='ml'))?Math.ceil(qty/pq):1;
   return+(packs*p).toFixed(2);
 }
+function renderSuperUI(){
+  // Rebuild supermarket chips + totals bar dynamically
+  const chipsWrap = document.getElementById('super-chips-wrap');
+  const totalsBar = document.getElementById('price-total-bar');
+  if(chipsWrap){
+    chipsWrap.innerHTML = SUPERS.map((s,i)=>`
+      <div class="super-chip ${activeSuperKey===s.key?'active':''}" onclick="filterSuper('${s.key}')">
+        <span>${s.label}</span>
+        <span onclick="event.stopPropagation();removeSuper('${s.key}')" style="margin-left:3px;color:var(--muted);cursor:pointer;font-size:13px;line-height:1">×</span>
+      </div>`).join('')
+      + `<button class="add-super-btn" onclick="addSupermarket()">+ Añadir</button>`;
+  }
+  if(totalsBar){
+    totalsBar.innerHTML = `<div class="price-box"><div class="pb-label">💰 Mejor total</div><div class="pb-val" id="total-global">—</div></div>`
+      + SUPERS.map((s,i)=>`<div class="price-box" id="pbox-${s.key}"><div class="pb-label">${s.label}</div><div class="pb-val" id="total-${s.key}" style="color:${PALETTE[i%PALETTE.length]}">—</div></div>`).join('');
+  }
+  // rebuild table header
+  const thead = document.getElementById('compra-thead');
+  if(thead){
+    thead.innerHTML = `<tr>
+      <th></th><th>Producto</th><th>Total semana</th><th>Stock</th><th>Necesitas</th>
+      ${SUPERS.map(s=>`<th style="color:${superColor(s.key)}">${s.label}</th>`).join('')}
+      <th>💰 Mejor</th>
+    </tr>`;
+  }
+}
+
+let activeSuperKey = '';  // '' = all
+
+window.filterSuper = (key) => {
+  activeSuperKey = activeSuperKey === key ? '' : key;
+  renderSuperUI();
+  renderCompra();
+};
+
+window.addSupermarket = () => {
+  const name = prompt('Nombre del supermercado (ej: Costco):');
+  if(!name||!name.trim()) return;
+  const label = name.trim();
+  const key = label.toLowerCase().replace(/\s+/g,'_');
+  if(SUPERS.find(s=>s.key===key)){ toast('Ya existe'); return; }
+  SUPERS.push({key, label});
+  saveSupers();
+  renderSuperUI();
+  renderCompra();
+  toast(`✓ ${label} añadido`);
+};
+
+window.removeSuper = (key) => {
+  if(!confirm(`¿Eliminar "${superLabel(key)}" de la lista?`)) return;
+  SUPERS = SUPERS.filter(s=>s.key!==key);
+  if(activeSuperKey===key) activeSuperKey='';
+  saveSupers();
+  renderSuperUI();
+  renderCompra();
+};
+
 function renderCompra(){
+  renderSuperUI();
   const COMPRA=getCompraList();
   const soloFalta=document.getElementById('chk-solo-falta')?.checked||false;
   let rows='';
-  const totals={merc:0,lidl:0,carrefour:0,dia:0,eroski:0};
+  const totals={};
+  SUPERS.forEach(s=>totals[s.key]=0);
+
   COMPRA.forEach((item,i)=>{
-    const k=item.p,pr=PRICES[k],stk=STOCK[k]||{qty:0,u:item.u};
+    const k=item.p, pr=PRICES[k], stk=STOCK[k]||{qty:0,u:item.u};
     const needed=Math.max(0,+(item.qty-stk.qty).toFixed(3));
     if(soloFalta&&needed<=0)return;
-    // filter by selected super
-    if(currentSuperTab!=='all'&&currentSuperTab!=='pendientes'){
-      if(!pr||pr[currentSuperTab]===null||pr[currentSuperTab]===undefined)return;
+    // filter by active super
+    if(activeSuperKey){
+      if(!pr||pr[activeSuperKey]===null||pr[activeSuperKey]===undefined)return;
     }
-    if(currentSuperTab==='pendientes'&&pr)return;
-    // stock display
     const nTxt=needed<=0
       ?`<span class="stock-ok">✓ OK</span>`
       :`<span class="${stk.qty>0?'stock-low':'stock-empty'}">${needed.toFixed(0)} ${item.u}</span>`;
     const sDisp=`<input class="stock-input" type="number" min="0" value="${stk.qty}" onchange="updStock('${k}','${item.u}',+this.value)">`;
-    // compute costs per super
     const costs={};
     SUPERS.forEach(s=>{
-      if(needed>0){const c=estCost(k,needed,item.u,s);costs[s]=c;if(c)totals[s]+=c;}
-      else{costs[s]=null;}
+      if(needed>0){const c=estCost(k,needed,item.u,s.key);costs[s.key]=c;if(c)totals[s.key]+=c;}
+      else costs[s.key]=null;
     });
-    const validCosts=SUPERS.map(s=>costs[s]).filter(v=>v!==null&&v>0);
+    const validCosts=Object.values(costs).filter(v=>v!==null&&v>0);
     const minCost=validCosts.length?Math.min(...validCosts):null;
-    // build price cells per super
-    const superCells=SUPERS.map(s=>{
-      const unitP=pr?pr[s]:null;
+    const superCells=SUPERS.map((s,idx)=>{
+      const unitP=pr?pr[s.key]:null;
+      const col=PALETTE[idx%PALETTE.length];
       if(unitP===null||unitP===undefined) return `<td style="color:var(--muted);text-align:center;font-size:10px">—</td>`;
-      const isBest=minCost!==null&&costs[s]===minCost;
-      const col=SUPER_COLORS[s];
+      const isBest=minCost!==null&&costs[s.key]===minCost;
       if(needed<=0) return `<td style="text-align:center"><span class="price-chip" style="color:${col};font-size:9px">${unitP}€</span></td>`;
-      return `<td style="text-align:center"><span class="price-chip ${isBest?'cheapest':'normal'}" style="${isBest?'':'color:'+col}">${costs[s]!==null?costs[s]+'€':'—'}<br><span style="opacity:.55;font-size:8px">(${unitP}€/u)</span></span></td>`;
+      return `<td style="text-align:center"><span class="price-chip ${isBest?'cheapest':'normal'}" style="${isBest?'':'color:'+col}">${costs[s.key]!==null?costs[s.key]+'€':'—'}<br><span style="opacity:.55;font-size:8px">(${unitP}€/u)</span></span></td>`;
     }).join('');
-    // best super label
     let bestLabel='—';
     if(minCost!==null){
-      const bs=SUPERS.find(s=>costs[s]===minCost);
-      if(bs) bestLabel=`<span style="color:${SUPER_COLORS[bs]};font-weight:700;font-family:'Syne',sans-serif;font-size:10px">${SUPER_LABELS[bs]}<br><span style="font-size:11px">${minCost}€</span></span>`;
+      const bs=SUPERS.find(s=>costs[s.key]===minCost);
+      if(bs) bestLabel=`<span style="color:${superColor(bs.key)};font-weight:700;font-family:'Syne',sans-serif;font-size:10px">${bs.label}<br><span style="font-size:11px">${minCost}€</span></span>`;
     }
     const chk=CHECKED[i]||false;
     rows+=`<tr style="${chk?'opacity:.38;text-decoration:line-through':''}">
@@ -2259,21 +2403,20 @@ function renderCompra(){
       <td>${bestLabel}</td>
     </tr>`;
   });
-  document.getElementById('compra-body').innerHTML=rows||`<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--muted2)">Sin ingredientes en la dieta</td></tr>`;
-  // update totals bar
-  const vals=SUPERS.map(s=>totals[s]).filter(v=>v>0);
+  const colCount = 6 + SUPERS.length;
+  document.getElementById('compra-body').innerHTML=rows||`<tr><td colspan="${colCount}" style="text-align:center;padding:20px;color:var(--muted2)">Sin ingredientes en la dieta</td></tr>`;
+  const vals=Object.values(totals).filter(v=>v>0);
   const minTotal=vals.length?Math.min(...vals):null;
   SUPERS.forEach(s=>{
-    const el=document.getElementById('total-'+s);
-    if(el) el.textContent=totals[s]>0?totals[s].toFixed(2)+'€':'—';
+    const el=document.getElementById('total-'+s.key);
+    if(el) el.textContent=totals[s.key]>0?totals[s.key].toFixed(2)+'€':'—';
   });
-  document.getElementById('total-global').textContent=minTotal?minTotal.toFixed(2)+'€':'—';
-  // highlight best super box
+  if(document.getElementById('total-global'))
+    document.getElementById('total-global').textContent=minTotal?minTotal.toFixed(2)+'€':'—';
   document.querySelectorAll('.price-total-bar .price-box').forEach(b=>b.classList.remove('best-super'));
   if(minTotal){
-    const bs=SUPERS.find(s=>Math.abs(totals[s]-minTotal)<0.001);
-    const el=document.getElementById('total-'+bs);
-    if(el) el.closest('.price-box').classList.add('best-super');
+    const bs=SUPERS.find(s=>Math.abs(totals[s.key]-minTotal)<0.001);
+    if(bs){ const el=document.getElementById('total-'+bs.key); if(el) el.closest('.price-box')?.classList.add('best-super'); }
   }
 }
 window.togCheck=(i,v)=>{CHECKED[i]=v;renderCompra();};
@@ -2875,6 +3018,11 @@ function showTab(name){
   }
 }
 
+window.forceLogout=async()=>{
+  try{ await sb.auth.signOut(); }catch(e){}
+  sessionStorage.clear();
+  window.location.href='login.html';
+};
 window.confirmLogout=async()=>{if(!confirm('¿Cerrar sesión?'))return;await sb.auth.signOut();window.location.href='login.html';};
 
 // ══════════════════════════════════════════════════════
