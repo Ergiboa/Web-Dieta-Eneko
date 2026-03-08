@@ -870,7 +870,7 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
       <button class="btn ghost xs" onclick="window.print()" title="Imprimir">🖨 Imprimir</button>
       <button class="btn ghost xs" onclick="resetChecked()">↺ Reset</button>
       <button class="btn sm" id="btn-merc-fetch" onclick="fetchMercadonaPrices()" title="Busca precios reales en tienda.mercadona.es">
-        🟢 Actualizar precios Mercadona
+        🟢 Precios Mercadona
       </button>
       <div id="merc-fetch-status" style="font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace"></div>
       <button class="btn ghost xs" onclick="openPriceEditor()" style="margin-left:auto">✏️ Editar precios</button>
@@ -1519,16 +1519,25 @@ async function loadClients() {
     if(error) throw error;
     allClients = data || [];
     const sel = document.getElementById('client-select');
-    sel.innerHTML = '<option value="">— Selecciona cliente —</option>';
+    sel.innerHTML = '';
+    // Coach themselves as first option
+    const selfOpt = document.createElement('option');
+    selfOpt.value = currentUser.id;
+    selfOpt.textContent = '👤 Yo (entrenador)';
+    sel.appendChild(selfOpt);
     allClients.forEach(c => {
       const o = document.createElement('option');
       o.value = c.id; o.textContent = c.full_name || c.email;
       sel.appendChild(o);
     });
     await loadCoachData();
+    // Auto-select first client if exists, otherwise self
     if (allClients.length > 0) {
       sel.value = allClients[0].id;
       await switchClient(allClients[0].id);
+    } else {
+      sel.value = currentUser.id;
+      currentClientId = currentUser.id;
     }
   }catch(e){
     console.error('loadClients error:', e.message);
@@ -1635,8 +1644,11 @@ async function switchClient(clientId) {
   currentClientId = clientId;
   CHECKED = {}; // reset lista compra al cambiar cliente
   await loadClientData(clientId);
-  const clientName = document.getElementById('client-select').selectedOptions[0]?.text || '';
-  document.getElementById('sb-username').textContent = (currentProfile.full_name||'') + ' → ' + clientName;
+  const selectedText = document.getElementById('client-select').selectedOptions[0]?.text || '';
+  const isSelf = clientId === currentUser.id;
+  document.getElementById('sb-username').textContent = isSelf
+    ? (currentProfile.full_name || currentProfile.email || 'Entrenador')
+    : (currentProfile.full_name||'') + ' → ' + selectedText;
   // Re-renderizar TODOS los paneles del cliente
   renderResumen();
   renderDiet();
@@ -1717,12 +1729,14 @@ async function saveRoutinesToServer() {
     updated_at: new Date().toISOString()
   }));
   if (rows.length > 0) {
-    await sb.from('routines').upsert(rows, { onConflict: 'id' });
+    const { error: rErr } = await sb.from('routines').upsert(rows, { onConflict: 'id', ignoreDuplicates: false });
+    if (rErr) console.warn('routines upsert:', rErr.message);
   }
-  await sb.from('week_schedules').upsert({
+  const { error: sErr } = await sb.from('week_schedules').upsert({
     client_id: currentClientId, coach_id: coachId,
     schedule: SCHEDULE, updated_at: new Date().toISOString()
   }, { onConflict: 'client_id' });
+  if (sErr) console.warn('week_schedules upsert:', sErr.message);
   flash();
 }
 
@@ -3568,7 +3582,7 @@ function renderProgressHistory() {
   const rows = [...PROGRESS].reverse();
   tbody.innerHTML = rows.map((entry, idx) => {
     const prevEntry = rows[idx + 1]; // older entry
-    const wDiff = entry.weight !== null && prevEntry?.weight !== null
+    const wDiff = (entry.weight != null && prevEntry?.weight != null)
       ? +(entry.weight - prevEntry.weight).toFixed(1) : null;
 
     const diffBadge = wDiff === null ? '' :
