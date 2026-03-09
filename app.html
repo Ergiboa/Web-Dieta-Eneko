@@ -285,6 +285,17 @@ td select{background:var(--card2);color:var(--text);border:1px solid var(--borde
 }
 
 /* ── TRAINING MODULE ── */
+.trn-subnav{display:flex;gap:3px;background:var(--card2);border-radius:8px;padding:3px;width:fit-content;margin-bottom:13px}
+.trn-snav-btn{padding:6px 14px;border-radius:5px;border:none;background:none;color:var(--muted2);font-family:'Syne',sans-serif;font-weight:700;font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.trn-snav-btn.active{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.ex-pf-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted2);padding:3px 9px;border-radius:5px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.5px;transition:all .12s}
+.ex-pf-btn.active{background:rgba(194,242,79,.1);border-color:var(--accent);color:var(--accent)}
+.ex-picker-item{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--card2);cursor:pointer;transition:background .1s}
+.ex-picker-item:last-child{border-bottom:none}
+.ex-picker-item:hover{background:rgba(194,242,79,.04)}
+.ex-picker-name{font-family:'Syne',sans-serif;font-weight:600;font-size:12px;flex:1}
+.ex-picker-muscle{font-size:9px;color:var(--muted2);padding:2px 7px;background:var(--card2);border-radius:3px;border:1px solid var(--border)}
+.day-assign-bar{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 13px}
 .trn-layout{display:grid;grid-template-columns:230px 1fr;gap:12px;align-items:start}
 @media(max-width:768px){.trn-layout{grid-template-columns:1fr}}
 .trn-sidebar{background:var(--card);border:1px solid var(--border);border-radius:9px;overflow:hidden;position:sticky;top:14px}
@@ -349,6 +360,8 @@ td select{background:var(--card2);color:var(--text);border:1px solid var(--borde
 .trn-week-bar{display:flex;gap:4px;flex-wrap:wrap}
 .twd{flex:1;min-width:52px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 5px;text-align:center;cursor:pointer;transition:all .15s}
 .twd:hover:not(.rest){border-color:var(--accent2)}
+.twd.selected{border-color:var(--accent);background:rgba(194,242,79,.06)}
+.day-assign-bar{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 13px}
 .twd.done{background:rgba(194,242,79,.05);border-color:var(--accent)}
 .twd.today{border-color:var(--accent2)}
 .twd.rest{opacity:.35;cursor:default}
@@ -725,7 +738,7 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
     <div class="nav-item" data-tab="perfil" onclick="navItemClick(this,event)"><span class="nav-icon">👤</span>Mi perfil</div>
 
     <!-- Coach-only: GIF Library (hidden from clients) -->
-    <div class="nav-item coach-only-nav" id="nav-giflib" data-tab="ejercicios" style="display:none" onclick="navItemClick(this,event)"><span class="nav-icon">🎬</span>Librería GIFs</div>
+    <div class="nav-item coach-only-nav" id="nav-giflib" data-tab="entreno" style="display:none" onclick="navItemClick(this,event);setTimeout(()=>showTrnSec('ejerciciosdb'),50)"><span class="nav-icon">🎬</span>Ejercicios DB</div>
   </nav>
 
   <div class="sb-bottom">
@@ -939,29 +952,63 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
 
   <!-- ENTRENO -->
   <div id="panel-entreno" class="panel">
-    <div class="trn-layout">
-      <div>
-        <div class="trn-sidebar">
-          <div class="trn-sidebar-head">
-            <span>Entrenamientos</span>
-            <button class="btn sm" id="new-routine-btn" onclick="newRoutine()">+ Nueva</button>
+    <!-- Sub-nav -->
+    <div class="trn-subnav">
+      <button class="trn-snav-btn active" id="trnSnav-semana"       onclick="showTrnSec('semana')">📅 Semana</button>
+      <button class="trn-snav-btn"        id="trnSnav-rutinadb"     onclick="showTrnSec('rutinadb')">📋 Rutinas DB</button>
+      <button class="trn-snav-btn"        id="trnSnav-ejerciciosdb" onclick="showTrnSec('ejerciciosdb')">🏋 Ejercicios DB</button>
+    </div>
+
+    <!-- ── SEMANA ── -->
+    <div id="trnSec-semana">
+      <div class="trn-week-bar" id="trn-week-bar"></div>
+      <div id="trn-day-bar"></div>
+      <div id="trn-editor-area">
+        <div class="trn-empty"><div style="font-size:36px">📅</div><div>Selecciona un día arriba</div></div>
+      </div>
+      <div id="trn-stats-area" style="display:none;margin-top:12px">
+        <div class="sec" style="margin-top:4px">📊 Estadísticas semana</div>
+        <div class="stats-grid" id="trn-stats-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── RUTINAS DB ── -->
+    <div id="trnSec-rutinadb" style="display:none">
+      <div class="trn-layout">
+        <div>
+          <div class="trn-sidebar">
+            <div class="trn-sidebar-head">
+              <span>Plantillas</span>
+              <button class="btn sm" id="new-routine-btn" onclick="newRoutine()">+ Nueva</button>
+            </div>
+            <div id="rdb-list" class="rtn-list"></div>
           </div>
-          <div class="trn-tabs">
-            <button class="trn-tab active" id="trnTab-routines" onclick="switchTrnTab('routines')">Rutinas</button>
-            <button class="trn-tab" id="trnTab-schedule" onclick="switchTrnTab('schedule')">Semana</button>
+        </div>
+        <div class="trn-main">
+          <div id="rdb-editor-area">
+            <div class="trn-empty"><div style="font-size:36px">📋</div><div>Selecciona o crea una plantilla</div><div style="font-size:11px;color:var(--muted2)">Las plantillas se copian por día — cada día es independiente</div></div>
           </div>
-          <div id="trn-routines-pane" class="rtn-list"></div>
-          <div id="trn-schedule-pane" class="week-sched" style="display:none"></div>
         </div>
       </div>
-      <div class="trn-main">
-        <div class="trn-week-bar" id="trn-week-bar"></div>
-        <div id="trn-editor-area">
-          <div class="trn-empty"><div style="font-size:36px">💪</div><div>Selecciona una rutina</div></div>
+    </div>
+
+    <!-- ── EJERCICIOS DB ── -->
+    <div id="trnSec-ejerciciosdb" style="display:none">
+      <div class="ex-library">
+        <div class="ex-list-panel">
+          <div class="ex-list-head">
+            <div class="ex-list-head-row">
+              <span>Ejercicios (<span id="ex-count">0</span>)</span>
+              <button class="btn sm" onclick="newExGlobal()">+ Nuevo</button>
+            </div>
+            <input type="text" class="ex-search" id="ex-search" placeholder="Buscar por nombre o músculo..." oninput="renderExGlobal()">
+          </div>
+          <div class="ex-list-body" id="ex-list-body"></div>
         </div>
-        <div id="trn-stats-area" style="display:none">
-          <div class="sec" style="margin-top:4px">📊 Estadísticas semana</div>
-          <div class="stats-grid" id="trn-stats-grid"></div>
+        <div id="ex-editor-area">
+          <div class="ex-editor">
+            <div style="padding:14px;display:flex;align-items:center;justify-content:center;min-height:200px;color:var(--muted2);font-family:'Syne',sans-serif">Selecciona un ejercicio o crea uno nuevo</div>
+          </div>
         </div>
       </div>
     </div>
@@ -970,27 +1017,7 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
   <!-- PROGRESO moved to panel-perfil -->
   <div id="panel-progreso" class="panel" style="display:none!important"></div>
 
-  <!-- EJERCICIOS / GIF LIBRARY (coach only) -->
-  <div id="panel-ejercicios" class="panel">
-    <div class="sec">Librería de ejercicios con GIFs</div>
-    <div class="ex-library">
-      <div class="ex-list-panel">
-        <div class="ex-list-head">
-          <div class="ex-list-head-row">
-            <span>Ejercicios (<span id="ex-count">0</span>)</span>
-            <button class="btn sm" onclick="newExercise()">+ Nuevo</button>
-          </div>
-          <input type="text" class="ex-search" id="ex-search" placeholder="Buscar por nombre o músculo..." oninput="renderExList()">
-        </div>
-        <div class="ex-list-body" id="ex-list-body"></div>
-      </div>
-      <div id="ex-editor-area">
-        <div class="ex-editor">
-          <div style="padding:14px;display:flex;align-items:center;justify-content:center;min-height:200px;color:var(--muted2);font-family:'Syne',sans-serif">Selecciona un ejercicio o crea uno nuevo</div>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
   <!-- NOTAS -->
   <!-- ═══════════════════════════════════════════════════
@@ -1311,6 +1338,7 @@ let CHECKED  = {};
 let ROUTINES = [];
 let SCHEDULE = {};
 let TRN_LOG  = {};
+let TRN_LOG_HISTORY = {};
 let EX_LIBRARY = [];
 let personalNotes = '';
 let coachFeedback = '';
@@ -1321,7 +1349,9 @@ let currentSuperTab = 'all';
 let currentRecipeId = null;
 let currentRtnId    = null;
 let currentExId     = null;
-let trnTabMode      = 'routines';
+let currentDay      = null;
+let currentTrnSec   = 'semana';
+let currentExIdGlobal = null;
 
 const MEAL_LABELS  = {desayuno:'🌅 Desayuno',comida:'🍽 Comida',preEntreno:'⚡ Pre-entreno',cena:'🌙 Cena',preCama:'🛌 Pre-cama'};
 const MEALS_ORDER  = ['desayuno','comida','preEntreno','cena','preCama'];
@@ -1479,7 +1509,7 @@ async function boot() {
       await loadClientData(currentUser.id);
       document.getElementById('diet-locked-notice').style.display = 'flex';
       document.getElementById('diet-edit-btns').style.display = 'none';
-      document.getElementById('new-routine-btn').style.display = 'none';
+      const nrb=document.getElementById('new-routine-btn');if(nrb)nrb.style.display='none';
       document.querySelector('.client-feedback-area').style.display = 'block';
       loadPublishedFeedback();
     }
@@ -1574,13 +1604,14 @@ async function loadClientData(clientId) {
   currentClientId = clientId;
   const coachId = currentProfile.role === 'coach' ? currentUser.id : currentProfile.coach_id;
 
-  const [dietRes, routinesRes, schedRes, logRes, stockRes, notesRes] = await Promise.all([
+  const [dietRes, routinesRes, schedRes, logRes, stockRes, notesRes, histLogRes] = await Promise.all([
     sb.from('client_diets').select('*').eq('client_id', clientId).maybeSingle(),
     sb.from('routines').select('*').eq('client_id', clientId),
     sb.from('week_schedules').select('*').eq('client_id', clientId).maybeSingle(),
     sb.from('training_logs').select('*').eq('client_id', clientId).eq('week_key', THIS_WEEK),
     sb.from('client_stock').select('*').eq('client_id', clientId).maybeSingle(),
     sb.from('client_notes').select('*').eq('client_id', clientId).maybeSingle(),
+    sb.from('training_logs').select('week_key,routine_id,exercises').eq('client_id', clientId).order('week_key',{ascending:false}).limit(200),
   ]);
 
   DIET     = dietRes.data?.diet_json || getDefaultDiet();
@@ -1591,10 +1622,15 @@ async function loadClientData(clientId) {
   coachFeedback   = notesRes.data?.coach_feedback  || '';
   publishedFeedback = notesRes.data?.coach_feedback || '';
 
-  TRN_LOG = {};
+  TRN_LOG = {}; TRN_LOG_HISTORY = {};
   if (!TRN_LOG[THIS_WEEK]) TRN_LOG[THIS_WEEK] = {};
+  // routine_id column now stores day label (LUN,MAR...) — one log entry per day
   (logRes.data||[]).forEach(row => {
     TRN_LOG[THIS_WEEK][row.routine_id] = { done: row.completed, exercises: row.exercises || {} };
+  });
+  (histLogRes.data||[]).forEach(row => {
+    if(!TRN_LOG_HISTORY[row.week_key]) TRN_LOG_HISTORY[row.week_key]={};
+    TRN_LOG_HISTORY[row.week_key][row.routine_id] = row.exercises || {};
   });
 
   DB = getDefaultDB();
@@ -1652,8 +1688,8 @@ async function switchClient(clientId) {
   // Re-renderizar TODOS los paneles del cliente
   renderResumen();
   renderDiet();
-  renderTrnSidebar(); renderTrnWeekBar(); renderTrnStats();
-  if (currentRtnId) renderTrnEditor();
+  renderTrnWeekBar(); renderTrnStats();
+  // day-based editor - no auto-render needed;
   renderRecipes();
   renderStockSidebar();
   renderCompra();
@@ -1664,14 +1700,8 @@ async function switchClient(clientId) {
 
 async function loadExLibrary() {
   try{
-    const coachId = currentProfile.role === 'coach' ? currentUser.id : currentProfile.coach_id;
-    let query = sb.from('exercises_library').select('*');
-    if (coachId) {
-      query = query.or(`coach_id.is.null,coach_id.eq.${coachId}`);
-    } else {
-      query = query.is('coach_id', null);
-    }
-    const { data, error } = await query.order('name');
+    // Exercises DB is shared globally — no coach_id filter
+    const { data, error } = await sb.from('exercises_library').select('*').order('name');
     if(error) throw error;
     EX_LIBRARY = data || [];
   }catch(e){
@@ -1740,21 +1770,18 @@ async function saveRoutinesToServer() {
   flash();
 }
 
-async function saveTrainingLog(routineId) {
+async function saveTrainingLog(dayKey) {
   if (!currentClientId) return;
-  const log = (TRN_LOG[THIS_WEEK]||{})[routineId] || {};
+  const log = (TRN_LOG[THIS_WEEK]||{})[dayKey] || {};
+  // dayKey = 'LUN','MAR'... stored in routine_id column (no schema change needed)
   const { error } = await sb.from('training_logs').upsert({
-    client_id: currentClientId, routine_id: routineId, week_key: THIS_WEEK,
+    client_id: currentClientId, routine_id: dayKey, week_key: THIS_WEEK,
     exercises: log.exercises || {}, completed: log.done || false,
     logged_at: new Date().toISOString()
   }, { onConflict: 'client_id,routine_id,week_key' });
   if (error) {
     console.error('saveTrainingLog error:', error.message, error.code);
-    if (error.code === '42501') {
-      toast('⚠ Sin permisos para guardar. Ejecuta el SQL de migración en Supabase.');
-    } else {
-      toast('⚠ Error guardando entreno: ' + error.message);
-    }
+    toast('⚠ Error guardando entreno: ' + error.message);
     return;
   }
   flash();
@@ -2599,129 +2626,518 @@ window.closeGifModal = () => {
 };
 
 // ══════════════════════════════════════════════════════
-//  TRAINING MODULE
+//  TRAINING MODULE  v2 — day-keyed logs, independent copies
 // ══════════════════════════════════════════════════════
+
+// ── helpers ──
 function getRtn(id){return ROUTINES.find(r=>r.id===id);}
 function getTodayLabel(){const d=new Date().getDay();return DAY_LABELS[[6,0,1,2,3,4,5][d]];}
-function getWeekLog(rid){return(TRN_LOG[THIS_WEEK]&&TRN_LOG[THIS_WEEK][rid])||{done:false,exercises:{}};}
-function getPrevWeekLog(rid,exId){const keys=Object.keys(TRN_LOG).sort();const idx=keys.indexOf(THIS_WEEK);if(idx<=0)return null;const prev=TRN_LOG[keys[idx-1]]?.[rid];return prev?.exercises?.[exId]||null;}
+const DAY_FULL={LUN:'Lunes',MAR:'Martes',MIE:'Miércoles',JUE:'Jueves',VIE:'Viernes',SAB:'Sábado',DOM:'Domingo'};
 
-function renderTrnSidebar(){
-  const list=document.getElementById('trn-routines-pane');if(!list)return;
-  list.innerHTML=ROUTINES.length===0?`<div style="padding:14px;color:var(--muted2);font-size:11px;text-align:center">Sin rutinas</div>`:ROUTINES.map(r=>{const log=getWeekLog(r.id);return`<div class="rtn-item ${r.id===currentRtnId?'active':''}" onclick="selectRoutine('${r.id}')"><div><div class="rtn-item-name">${log.done?'✓ ':''}${r.name}</div><div class="rtn-item-meta">${(r.exercises||[]).length} ejercicios · ${(r.muscles||[]).slice(0,2).join(', ')||'—'}</div></div></div>`;}).join('');
+// SCHEDULE entry: {rid: templateId|null, exs: [...exercises]|null}
+// exs=null means "use template's exercises as-is"; exs=[...] means custom copy for this day
+function getSchedEntry(day){
+  const v=SCHEDULE[day];
+  if(!v)return{rid:null,exs:null};
+  if(typeof v==='string')return{rid:v,exs:null}; // backwards compat
+  return{rid:v.rid||null,exs:v.exs||null};
 }
-function renderSchedule(){
-  const pane=document.getElementById('trn-schedule-pane');if(!pane)return;
-  pane.innerHTML=DAY_LABELS.map(day=>{const rid=SCHEDULE[day]||'',rtn=rid?getRtn(rid):null,log=rid?getWeekLog(rid):{};const opts=`<option value="">— Descanso —</option>`+ROUTINES.map(r=>`<option value="${r.id}" ${r.id===rid?'selected':''}>${r.name}</option>`).join('');return`<div class="sched-row"><span class="sched-day-lbl">${day}</span><select class="sched-sel" onchange="setScheduleDay('${day}',this.value)" ${isCoachView()?'':'disabled'}>${opts}</select><span class="sched-done-icon">${log.done?'✅':''}</span></div>`;}).join('');
+
+// Get exercises to display for a day (custom copy OR template)
+function getDayExs(day){
+  const{rid,exs}=getSchedEntry(day);
+  if(exs&&exs.length)return exs;
+  const rtn=rid?getRtn(rid):null;
+  // Deep clone so edits don't bleed into template
+  return rtn?JSON.parse(JSON.stringify(rtn.exercises||[])):[];
 }
-window.setScheduleDay=async(day,rid)=>{SCHEDULE[day]=rid;renderTrnWeekBar();renderSchedule();if(isCoachView())await saveRoutinesToServer();};
-window.switchTrnTab=(tab)=>{trnTabMode=tab;document.getElementById('trn-routines-pane').style.display=tab==='routines'?'block':'none';document.getElementById('trn-schedule-pane').style.display=tab==='schedule'?'block':'none';document.querySelectorAll('.trn-tab').forEach(b=>b.classList.remove('active'));document.getElementById('trnTab-'+tab).classList.add('active');if(tab==='schedule')renderSchedule();};
+
+function getDayLog(day){return(TRN_LOG[THIS_WEEK]&&TRN_LOG[THIS_WEEK][day])||{done:false,exercises:{}};}
+
+// ── section switcher ──
+window.showTrnSec=function(sec){
+  currentTrnSec=sec;
+  ['semana','rutinadb','ejerciciosdb'].forEach(s=>{
+    const el=document.getElementById('trnSec-'+s);
+    if(el)el.style.display=(s===sec)?'':'none';
+  });
+  document.querySelectorAll('.trn-snav-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('trnSnav-'+sec);if(btn)btn.classList.add('active');
+  if(sec==='semana'){renderTrnWeekBar();if(currentDay)renderTrnEditor(currentDay);renderTrnStats();}
+  if(sec==='rutinadb'){renderRutinaDB();if(currentRtnId)renderRtnTemplate(currentRtnId);}
+  if(sec==='ejerciciosdb'){renderExGlobal();}
+};
+
+// ── week bar ──
 function renderTrnWeekBar(){
   const bar=document.getElementById('trn-week-bar');if(!bar)return;
   const today=getTodayLabel();
-  bar.innerHTML=DAY_LABELS.map(day=>{const rid=SCHEDULE[day]||'',rtn=rid?getRtn(rid):null,log=rid?getWeekLog(rid):{},isDone=log.done,isToday=day===today,isRest=!rid;const cls=[isRest?'rest':'',isDone?'done':'',isToday&&!isRest?'today':''].filter(Boolean).join(' ');const icon=isDone?'✅':isRest?'😴':isToday?'🏋️':'⬜';return`<div class="twd ${cls}" onclick="${!isRest?`selectRoutine('${rid}')`:''}" title="${rtn?rtn.name:'Descanso'}"><div class="twd-icon">${icon}</div><div class="twd-day">${day}</div><div class="twd-rtn">${rtn?rtn.name:'Descanso'}</div></div>`;}).join('');
+  bar.innerHTML=DAY_LABELS.map(day=>{
+    const{rid}=getSchedEntry(day);
+    const rtn=rid?getRtn(rid):null;
+    const log=getDayLog(day);
+    const isDone=log.done,isToday=day===today,isRest=!rid,isSel=day===currentDay;
+    const cls=[isRest?'rest':'',isDone?'done':'',isToday&&!isRest?'today':'',isSel?'selected':''].filter(Boolean).join(' ');
+    const icon=isDone?'✅':isRest?'😴':isToday?'🏋️':'⬜';
+    return`<div class="twd ${cls}" onclick="selectDay('${day}')">
+      <div class="twd-icon">${icon}</div>
+      <div class="twd-day">${day}</div>
+      <div class="twd-rtn">${rtn?rtn.name:'Descanso'}</div>
+    </div>`;
+  }).join('');
 }
-window.selectRoutine=(id)=>{currentRtnId=id;renderTrnSidebar();renderTrnEditor();renderTrnStats();};
 
-function renderTrnEditor(){
+window.selectDay=function(day){currentDay=day;renderTrnWeekBar();renderTrnEditor(day);};
+
+// ── day editor ──
+function renderTrnEditor(day){
   const area=document.getElementById('trn-editor-area');if(!area)return;
-  if(!currentRtnId){area.innerHTML=`<div class="trn-empty"><div style="font-size:36px">💪</div><div>Selecciona una rutina</div></div>`;return;}
-  const r=getRtn(currentRtnId);if(!r){area.innerHTML='';return;}
-  const log=getWeekLog(r.id);
+  // Assign bar
+  const bar=document.getElementById('trn-day-bar');
+  if(bar){
+    const{rid,exs}=getSchedEntry(day);
+    const coach=isCoachView();
+    const opts='<option value="">— Descanso —</option>'+ROUTINES.map(r=>`<option value="${r.id}" ${r.id===rid?'selected':''}>${r.name}</option>`).join('');
+    bar.innerHTML=`<div class="day-assign-bar">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;white-space:nowrap">${DAY_FULL[day]||day}</span>
+      <select style="flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none"
+        onchange="setScheduleDay('${day}',this.value)" ${coach?'':'disabled'}>${opts}</select>
+      ${coach&&rid?`<button class="btn ghost xs" onclick="showTrnSec('rutinadb');selectRtn('${rid}')">✏ Plantilla</button>`:''}
+      ${coach&&exs?`<button class="btn ghost xs" title="Restaurar ejercicios de la plantilla" onclick="resetDayExs('${day}')">↺ Reset</button>`:''}
+    </div>`;
+  }
+  const{rid}=getSchedEntry(day);
+  if(!rid){
+    area.innerHTML=`<div class="trn-empty"><div style="font-size:36px">😴</div><div>Día de descanso</div>${isCoachView()?'<div style="font-size:11px;color:var(--muted2)">Asigna una rutina arriba para planificar</div>':''}</div>`;
+    return;
+  }
+  const rtn=getRtn(rid);
+  const dayExsList=getDayExs(day);
+  const log=getDayLog(day);
   const coach=isCoachView();
-  // Coach can log their own workouts (when viewing self)
-  const selfTraining = isCoachView() && currentClientId === currentUser.id;
-  const canLog = true; // both coach and clients can always log
-  const muscleChips=MUSCLES_LIST.map(m=>`<span class="mchip ${(r.muscles||[]).includes(m)?'on':''}" ${coach?`onclick="toggleMuscle('${r.id}','${m}')"`:'style="cursor:default"'}>${m}</span>`).join('');
-  const exBlocks=(r.exercises||[]).map((ex,ei)=>renderExBlock(r.id,ex,ei,log,coach,canLog)).join('');
   const isDone=log.done;
-  const doneBtn=isDone?`<button class="btn ghost sm" onclick="markRtnDone('${r.id}',false)">↺ Desmarcar</button>`:`<button class="btn teal sm" onclick="markRtnDone('${r.id}',true)">✓ Marcar hecha</button>`;
+  const exBlocks=dayExsList.map((ex,ei)=>renderDayExBlock(day,ex,ei,log,coach)).join('');
+  const doneBtn=isDone
+    ?`<button class="btn ghost sm" onclick="markDayDone('${day}',false)">↺ Desmarcar</button>`
+    :`<button class="btn teal sm" onclick="markDayDone('${day}',true)">✅ Marcar hecha</button>`;
   area.innerHTML=`<div class="rtn-editor">
     <div class="rtn-editor-head">
-      <input class="rtn-name-inp" type="text" value="${r.name}" id="rtnname-${r.id}" ${coach?`oninput="updateRtnName('${r.id}',this.value)"`:' readonly'}>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;flex:1">${rtn?rtn.name:'—'}</span>
       ${doneBtn}
-      ${coach?`<button class="btn danger sm" onclick="deleteRoutine('${r.id}')">🗑</button>`:''}
     </div>
-    <div class="muscle-chips">${muscleChips}</div>
     ${isDone?`<div style="background:rgba(194,242,79,.05);border-bottom:1px solid rgba(194,242,79,.15);padding:7px 13px;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:var(--accent)">✅ Completado esta semana</div>`:''}
-    <div id="exblocks-${r.id}">${exBlocks}</div>
-    <div style="padding:9px 13px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
-      ${coach?`<button class="btn ghost sm" onclick="addExercise('${r.id}')">+ Ejercicio</button><button class="btn ghost sm" onclick="saveRoutineAndToast('${r.id}')">💾 Guardar rutina</button>`:''}
-    </div>
+    <div id="day-exblocks-${day}">${exBlocks||`<div style="padding:14px;text-align:center;color:var(--muted2);font-size:11px">Sin ejercicios. El entrenador puede añadirlos.</div>`}</div>
+    ${coach?`<div style="padding:9px 13px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn ghost sm" onclick="addExToDay('${day}')">+ Ejercicio</button>
+      <button class="btn ghost sm" onclick="openExPicker('${day}','day')">📚 Librería</button>
+      <button class="btn ghost sm" onclick="saveDayExs('${day}')">💾 Guardar día</button>
+    </div>`:''}
   </div>`;
 }
 
-function renderExBlock(rid,ex,ei,log,coach,canLog=false){
+function renderDayExBlock(day,ex,ei,log,coach){
   const exLog=(log.exercises&&log.exercises[ex.id])||{sets:[],rpe:0};
-  const prevLog=getPrevWeekLog(rid,ex.id);
+  // Prev week same day for reference
+  const prevWks=Object.keys(TRN_LOG_HISTORY||{}).sort();
+  const prevExLog=prevWks.length?(TRN_LOG_HISTORY[prevWks[prevWks.length-1]]?.[day]?.exercises?.[ex.id]||null):null;
   const setsHtml=(ex.sets||[]).map((set,si)=>{
-    const logSet=(exLog.sets&&exLog.sets[si])||{};
-    const prevSet=(prevLog&&prevLog.sets&&prevLog.sets[si])||{};
-    const isDone=logSet.done||false;
-    const prevW=prevSet.weight?`${prevSet.weight}kg`:'—';
-    const prevR=prevSet.reps||'—';
-    return`<div class="set-row" id="setrow-${rid}-${ex.id}-${si}">
+    const ls=(exLog.sets&&exLog.sets[si])||{};
+    const ps=(prevExLog?.sets&&prevExLog.sets[si])||{};
+    const done=ls.done||false;
+    const phW=ps.weight?`${ps.weight}kg`:'—';
+    const phR=ps.reps||set.reps||'—';
+    return`<div class="set-row" id="setrow-${day}-${ex.id}-${si}">
       <span class="set-num">${si+1}</span>
-      ${(coach && !canLog)
-        ? `<input class="set-inp struct-readonly" type="text" value="${set.weight||'—'}" title="Peso planificado">`
-        : `<input class="set-inp ${isDone?'done-val':''}" type="number" min="0" placeholder="${prevW}" value="${logSet.weight||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'weight',this.value)" title="Peso (kg)">`}
-      <input class="set-inp ${(coach&&!canLog)?'struct-readonly':isDone?'done-val':''}" type="${(coach&&!canLog)?'text':'number'}" min="0" ${(coach&&!canLog)?`value="${set.reps||'—'}" title="Reps planificadas"`:`placeholder="${prevR}" value="${logSet.reps||set.reps||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'reps',this.value)" title="Reps"`}>
-      <input class="set-inp ${(coach&&!canLog)?'struct-readonly':''}" type="text" ${(coach&&!canLog)?`value="${set.time||'—'}" title="Tiempo"`:`placeholder="—" value="${logSet.time||set.time||''}" onchange="logSetVal('${rid}','${ex.id}',${si},'time',this.value)" title="Tiempo"`}>
-      ${(coach&&!canLog)
-        ? `<span style="color:var(--muted2);font-size:9px;text-align:center">—</span>`
-        : `<input type="checkbox" class="set-cb" ${isDone?'checked':''} onchange="logSetDone('${rid}','${ex.id}',${si},this.checked)">`}
-      ${coach?`<button class="set-del" onclick="delSet('${rid}',${ei},${si})">×</button>`:`<span></span>`}
+      <input class="set-inp${done?' done-val':''}" type="number" min="0" step="0.5" placeholder="${phW}" value="${ls.weight||''}" onchange="logSetVal('${day}','${ex.id}',${si},'weight',this.value)" title="Peso (kg)">
+      <input class="set-inp${done?' done-val':''}" type="number" min="0" placeholder="${phR}" value="${ls.reps||''}" onchange="logSetVal('${day}','${ex.id}',${si},'reps',this.value)" title="Reps">
+      <input class="set-inp" type="text" placeholder="—" value="${ls.time||set.time||''}" onchange="logSetVal('${day}','${ex.id}',${si},'time',this.value)" title="Tiempo">
+      <input type="checkbox" class="set-cb" ${done?'checked':''} onchange="logSetDone('${day}','${ex.id}',${si},this.checked)">
+      ${coach?`<button class="set-del" onclick="delExFromDay('${day}',${ei})">×</button>`:'<span></span>'}
     </div>`;
   }).join('');
   const rpeVal=exLog.rpe||0;
-  const rpeBtns=(canLog||!coach)?[...Array(10)].map((_,i)=>`<button class="rpebtn ${rpeVal===i+1?'on':''}" onclick="logRpe('${rid}','${ex.id}',${i+1})">${i+1}</button>`).join(''):'';
-  return`<div class="exblock" id="exblock-${rid}-${ex.id}">
+  const rpeBtns=[...Array(10)].map((_,i)=>`<button class="rpebtn${rpeVal===i+1?' on':''}" onclick="logRpe('${day}','${ex.id}',${i+1})">${i+1}</button>`).join('');
+  return`<div class="exblock" id="dexblock-${day}-${ei}">
     <div class="exblock-head">
-      <input class="ex-name-inp" type="text" value="${ex.name}" placeholder="Nombre" ${coach?`onchange="updateExName('${rid}',${ei},this.value)"`:' readonly'}>
-      <button class="gif-btn" onclick="openGifModal('${ex.name.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}')">🎬 GIF</button>
-      ${coach?`<button class="btn danger xs" onclick="delExercise('${rid}','${ex.id}')">✕</button>`:''}
+      ${coach
+        ?`<input class="ex-name-inp" type="text" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nombre" onchange="updateDayExName('${day}',${ei},this.value)">`
+        :`<span class="ex-name-inp" style="pointer-events:none;border-bottom:none">${ex.name}</span>`
+      }
+      <button class="gif-btn" onclick="openGifModal('${ex.name.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">🎬 GIF</button>
+      ${coach?`<button class="btn danger xs" onclick="delExFromDay('${day}',${ei})">✕</button>`:''}
     </div>
-    <input class="ex-note-inp" type="text" value="${ex.note||''}" placeholder="${coach?'Nota técnica...':'Nota del entrenador'}" ${coach?`onchange="updateExNote('${rid}',${ei},this.value)"`:' readonly'}>
+    ${coach
+      ?`<input class="ex-note-inp" type="text" value="${(ex.note||'').replace(/"/g,'&quot;')}" placeholder="Nota técnica..." onchange="updateDayExNote('${day}',${ei},this.value)">`
+      :(ex.note?`<div class="ex-note-inp" style="pointer-events:none;color:var(--muted2)">${ex.note}</div>`:'')
+    }
     <div class="exsets">
       <div class="sets-hdr"><span>#</span><span>Peso(kg)</span><span>Reps</span><span>Tiempo</span><span>✓</span><span></span></div>
-      <div id="sets-${rid}-${ex.id}">${setsHtml}</div>
+      <div id="daysets-${day}-${ex.id}">${setsHtml}</div>
     </div>
-    ${(canLog||!coach)?`<div class="rpe-row"><span class="rpe-lbl">RPE:</span>${rpeBtns}</div>`:''}
-    ${coach?`<button class="add-set-btn" onclick="addSet('${rid}','${ex.id}')">+ Serie</button>`:''}
+    <div class="rpe-row"><span class="rpe-lbl">RPE:</span>${rpeBtns}</div>
+    ${coach?`<button class="add-set-btn" onclick="addSetToDay('${day}','${ex.id}',${ei})">+ Serie</button>`:''}
   </div>`;
 }
 
-window.newRoutine=async()=>{if(!isCoachView())return;const id='rt'+Date.now();ROUTINES.push({id,name:'Nueva rutina',muscles:[],exercises:[],client_id:currentClientId,coach_id:currentUser.id});await saveRoutinesToServer();currentRtnId=id;renderTrnSidebar();renderTrnEditor();};
-window.deleteRoutine=async(id)=>{if(!confirm('¿Eliminar rutina?')||!isCoachView())return;await sb.from('routines').delete().eq('id',id);ROUTINES=ROUTINES.filter(r=>r.id!==id);Object.keys(SCHEDULE).forEach(d=>{if(SCHEDULE[d]===id)delete SCHEDULE[d];});await saveRoutinesToServer();currentRtnId=null;renderTrnSidebar();renderTrnEditor();renderTrnWeekBar();};
+// ── ensure day has its own exercise copy (detached from template) ──
+function ensureDayExsCopy(day){
+  const e=getSchedEntry(day);
+  if(!e.exs){
+    const rtn=e.rid?getRtn(e.rid):null;
+    SCHEDULE[day]={rid:e.rid,exs:JSON.parse(JSON.stringify(rtn?.exercises||[]))};
+  }
+}
+
+window.setScheduleDay=async(day,rid)=>{
+  SCHEDULE[day]={rid:rid||null,exs:null}; // reset custom exs when changing template
+  renderTrnWeekBar();renderTrnEditor(day);
+  if(isCoachView())await saveRoutinesToServer();
+};
+window.addExToDay=(day)=>{
+  if(!isCoachView())return;
+  ensureDayExsCopy(day);
+  getSchedEntry(day).exs.push({id:'dex'+Date.now(),name:'',note:'',sets:[{reps:10,weight:'',time:''}],rpe:0});
+  renderTrnEditor(day);
+};
+window.delExFromDay=(day,ei)=>{
+  if(!isCoachView())return;
+  ensureDayExsCopy(day);
+  getSchedEntry(day).exs.splice(ei,1);
+  renderTrnEditor(day);
+};
+window.updateDayExName=(day,ei,val)=>{ensureDayExsCopy(day);const exs=getSchedEntry(day).exs;if(exs[ei])exs[ei].name=val;};
+window.updateDayExNote=(day,ei,val)=>{ensureDayExsCopy(day);const exs=getSchedEntry(day).exs;if(exs[ei])exs[ei].note=val;};
+window.addSetToDay=(day,exId,ei)=>{
+  if(!isCoachView())return;
+  ensureDayExsCopy(day);
+  const ex=getSchedEntry(day).exs[ei];if(!ex)return;
+  const last=ex.sets[ex.sets.length-1]||{};
+  ex.sets.push({reps:last.reps||10,weight:'',time:''});
+  renderTrnEditor(day);
+};
+window.resetDayExs=async(day)=>{
+  if(!isCoachView()||!confirm('¿Restaurar los ejercicios de la plantilla para este día?'))return;
+  const{rid}=getSchedEntry(day);
+  SCHEDULE[day]={rid,exs:null};
+  renderTrnEditor(day);
+  await saveRoutinesToServer();
+};
+window.saveDayExs=async(day)=>{await saveRoutinesToServer();toast('💾 Día guardado ✓');};
+
+// ── logging (both coach and client can log weights/reps) ──
+function ensureDayLog(day,exId){
+  if(!TRN_LOG[THIS_WEEK])TRN_LOG[THIS_WEEK]={};
+  if(!TRN_LOG[THIS_WEEK][day])TRN_LOG[THIS_WEEK][day]={done:false,exercises:{}};
+  if(!TRN_LOG[THIS_WEEK][day].exercises[exId])TRN_LOG[THIS_WEEK][day].exercises[exId]={sets:[],rpe:0};
+  return TRN_LOG[THIS_WEEK][day].exercises[exId];
+}
+function ensureSetLog(day,exId,si){const el=ensureDayLog(day,exId);while(el.sets.length<=si)el.sets.push({});return el.sets[si];}
+
+window.logSetVal=async(day,exId,si,f,v)=>{
+  const s=ensureSetLog(day,exId,si);s[f]=f==='weight'||f==='reps'?+v:v;
+  await saveTrainingLog(day);renderTrnStats();
+};
+window.logSetDone=async(day,exId,si,checked)=>{
+  const s=ensureSetLog(day,exId,si);s.done=checked;
+  const row=document.querySelector(`#setrow-${day}-${exId}-${si}`);
+  if(row)row.querySelectorAll('.set-inp').forEach(i=>{checked?i.classList.add('done-val'):i.classList.remove('done-val');});
+  await saveTrainingLog(day);renderTrnStats();
+};
+window.logRpe=async(day,exId,val)=>{
+  const el=ensureDayLog(day,exId);el.rpe=val;
+  const exs=getDayExs(day);
+  const ei=exs.findIndex(e=>e.id===exId);
+  const rpeRow=document.querySelector(`#dexblock-${day}-${ei} .rpe-row`);
+  if(rpeRow)rpeRow.innerHTML=`<span class="rpe-lbl">RPE:</span>`+[...Array(10)].map((_,i)=>`<button class="rpebtn${val===i+1?' on':''}" onclick="logRpe('${day}','${exId}',${i+1})">${i+1}</button>`).join('');
+  await saveTrainingLog(day);
+};
+window.markDayDone=async(day,done)=>{
+  if(!TRN_LOG[THIS_WEEK])TRN_LOG[THIS_WEEK]={};
+  if(!TRN_LOG[THIS_WEEK][day])TRN_LOG[THIS_WEEK][day]={done:false,exercises:{}};
+  TRN_LOG[THIS_WEEK][day].done=done;
+  await saveTrainingLog(day);
+  renderTrnWeekBar();renderTrnEditor(day);renderTrnStats();
+  toast(done?'✅ Día completado':'↺ Desmarcado');
+};
+
+// ── Rutinas DB ──
+function renderRutinaDB(){
+  const list=document.getElementById('rdb-list');if(!list)return;
+  const coach=isCoachView();
+  list.innerHTML=!ROUTINES.length
+    ?`<div style="padding:14px;color:var(--muted2);font-size:11px;text-align:center">Sin plantillas${coach?'. Crea la primera.':''}</div>`
+    :ROUTINES.map(r=>`<div class="rtn-item${r.id===currentRtnId?' active':''}" onclick="selectRtn('${r.id}')">
+        <div class="rtn-item-name">${r.name}</div>
+        <div class="rtn-item-meta">${(r.exercises||[]).length} ej · ${(r.muscles||[]).slice(0,2).join(', ')||'—'}</div>
+      </div>`).join('');
+}
+
+window.selectRtn=function(id){currentRtnId=id;renderRutinaDB();renderRtnTemplate(id);};
+
+function renderRtnTemplate(rid){
+  const area=document.getElementById('rdb-editor-area');if(!area)return;
+  const r=getRtn(rid);if(!r){area.innerHTML='';return;}
+  const coach=isCoachView();
+  const muscleChips=MUSCLES_LIST.map(m=>`<span class="mchip${(r.muscles||[]).includes(m)?' on':''}" ${coach?`onclick="toggleMuscle('${rid}','${m}')"`:'style="cursor:default"'}>${m}</span>`).join('');
+  const exBlocks=(r.exercises||[]).map((ex,ei)=>`
+    <div class="exblock" id="tmpl-${rid}-${ei}">
+      <div class="exblock-head">
+        ${coach
+          ?`<input class="ex-name-inp" type="text" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nombre ejercicio" onchange="updateExName('${rid}',${ei},this.value)">`
+          :`<span class="ex-name-inp" style="pointer-events:none;border-bottom:none">${ex.name}</span>`
+        }
+        <button class="gif-btn" onclick="openGifModal('${ex.name.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">🎬 GIF</button>
+        ${coach?`<button class="btn danger xs" onclick="delExercise('${rid}','${ex.id}')">✕</button>`:''}
+      </div>
+      ${coach?`<input class="ex-note-inp" type="text" value="${(ex.note||'').replace(/"/g,'&quot;')}" placeholder="Nota técnica..." onchange="updateExNote('${rid}',${ei},this.value)">`:''}
+      <div class="exsets" style="padding:8px 14px">
+        <div style="font-size:9px;color:var(--muted2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.8px">Series de la plantilla</div>
+        ${(ex.sets||[]).map((s,si)=>`<div style="display:flex;gap:7px;align-items:center;padding:4px 0;border-bottom:1px dotted var(--card2)">
+          <span class="set-num">${si+1}</span>
+          ${coach
+            ?`<input type="number" value="${s.reps||''}" placeholder="Reps" style="width:52px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;text-align:center" onchange="updateTmplSet('${rid}','${ex.id}',${si},'reps',this.value)">
+              <input type="number" value="${s.weight||''}" placeholder="kg ref." style="width:52px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;text-align:center" onchange="updateTmplSet('${rid}','${ex.id}',${si},'weight',this.value)">
+              <button class="set-del" onclick="delTmplSet('${rid}','${ex.id}',${si})">×</button>`
+            :`<span style="font-size:11px;color:var(--muted2)">${s.reps||'?'} reps${s.weight?' · '+s.weight+'kg':''}</span>`
+          }
+        </div>`).join('')}
+        ${coach?`<button class="add-set-btn" style="margin-top:5px" onclick="addTmplSet('${rid}','${ex.id}')">+ Serie</button>`:''}
+      </div>
+    </div>`).join('');
+  area.innerHTML=`<div class="rtn-editor">
+    <div class="rtn-editor-head">
+      <input class="rtn-name-inp" type="text" value="${r.name}" id="rtnname-${rid}" ${coach?`oninput="updateRtnName('${rid}',this.value)"`:' readonly'}>
+      ${coach?`<button class="btn ghost sm" onclick="saveRoutineAndToast('${rid}')">💾 Guardar</button>
+               <button class="btn danger sm" onclick="deleteRoutine('${rid}')">🗑</button>`:''}
+    </div>
+    <div class="muscle-chips">${muscleChips}</div>
+    <div id="exblocks-${rid}">${exBlocks||`<div style="padding:14px;color:var(--muted2);font-size:11px;text-align:center">Sin ejercicios. Añade con los botones de abajo.</div>`}</div>
+    ${coach?`<div style="padding:9px 13px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn ghost sm" onclick="addExercise('${rid}')">+ Ejercicio</button>
+      <button class="btn ghost sm" onclick="openExPicker('${rid}','template')">📚 Librería</button>
+    </div>`:''}
+  </div>`;
+}
+
+// template CRUD
+window.addExercise=(rid)=>{
+  if(!isCoachView())return;const r=getRtn(rid);if(!r)return;
+  r.exercises.push({id:'ex'+Date.now(),name:'',note:'',sets:[{reps:10,weight:'',time:''}],rpe:0});
+  renderRtnTemplate(rid);
+};
+window.delExercise=(rid,exId)=>{
+  if(!isCoachView())return;const r=getRtn(rid);if(!r)return;
+  r.exercises=r.exercises.filter(e=>e.id!==exId);renderRtnTemplate(rid);
+};
+window.updateExName=(rid,ei,val)=>{const r=getRtn(rid);if(r&&r.exercises[ei])r.exercises[ei].name=val;};
+window.updateExNote=(rid,ei,val)=>{const r=getRtn(rid);if(r&&r.exercises[ei])r.exercises[ei].note=val;};
+window.updateTmplSet=(rid,exId,si,field,val)=>{
+  const r=getRtn(rid);if(!r)return;
+  const ex=r.exercises.find(e=>e.id===exId);if(ex&&ex.sets[si])ex.sets[si][field]=field==='reps'||field==='weight'?+val:val;
+};
+window.addTmplSet=(rid,exId)=>{
+  if(!isCoachView())return;const r=getRtn(rid);if(!r)return;
+  const ex=r.exercises.find(e=>e.id===exId);if(!ex)return;
+  const last=ex.sets[ex.sets.length-1]||{};
+  ex.sets.push({reps:last.reps||10,weight:'',time:''});renderRtnTemplate(rid);
+};
+window.delTmplSet=(rid,exId,si)=>{
+  if(!isCoachView())return;const r=getRtn(rid);if(!r)return;
+  const ex=r.exercises.find(e=>e.id===exId);if(ex){ex.sets.splice(si,1);renderRtnTemplate(rid);}
+};
+window.toggleMuscle=(rid,m)=>{
+  const r=getRtn(rid);if(!r)return;
+  const i=(r.muscles||[]).indexOf(m);i>=0?r.muscles.splice(i,1):(r.muscles=r.muscles||[],r.muscles.push(m));
+  const chips=document.querySelector('.muscle-chips');
+  if(chips)chips.innerHTML=MUSCLES_LIST.map(mu=>`<span class="mchip${(r.muscles||[]).includes(mu)?' on':''}" onclick="toggleMuscle('${rid}','${mu}')">${mu}</span>`).join('');
+};
+window.newRoutine=async()=>{
+  if(!isCoachView())return;
+  const id='rt'+Date.now();
+  ROUTINES.push({id,name:'Nueva rutina',muscles:[],exercises:[],client_id:currentClientId,coach_id:currentUser.id});
+  await saveRoutinesToServer();currentRtnId=id;renderRutinaDB();renderRtnTemplate(id);
+};
+window.deleteRoutine=async(id)=>{
+  if(!confirm('¿Eliminar esta plantilla?')||!isCoachView())return;
+  await sb.from('routines').delete().eq('id',id);
+  ROUTINES=ROUTINES.filter(r=>r.id!==id);
+  Object.keys(SCHEDULE).forEach(d=>{const e=getSchedEntry(d);if(e.rid===id)SCHEDULE[d]={rid:null,exs:null};});
+  await saveRoutinesToServer();currentRtnId=null;renderRutinaDB();
+  const area=document.getElementById('rdb-editor-area');
+  if(area)area.innerHTML=`<div class="trn-empty"><div style="font-size:36px">📋</div><div>Plantilla eliminada</div></div>`;
+};
 window.updateRtnName=(id,val)=>{const r=getRtn(id);if(!r)return;r.name=val;const li=document.querySelector('.rtn-item.active .rtn-item-name');if(li)li.textContent=val;};
-window.saveRoutineAndToast=async(id)=>{const inp=document.getElementById(`rtnname-${id}`);const r=getRtn(id);if(!r)return;if(inp)r.name=inp.value.trim()||r.name;await saveRoutinesToServer();renderTrnSidebar();renderTrnWeekBar();toast('Rutina guardada ✓');};
-window.toggleMuscle=(rid,m)=>{const r=getRtn(rid);if(!r)return;const i=(r.muscles||[]).indexOf(m);i>=0?r.muscles.splice(i,1):(r.muscles=r.muscles||[],r.muscles.push(m));const chips=document.querySelector('.muscle-chips');if(chips)chips.innerHTML=MUSCLES_LIST.map(mu=>`<span class="mchip ${(r.muscles||[]).includes(mu)?'on':''}" onclick="toggleMuscle('${rid}','${mu}')">${mu}</span>`).join('');};
-window.addExercise=(rid)=>{if(!isCoachView())return;const r=getRtn(rid);if(!r)return;const ex={id:'ex'+Date.now(),name:'',note:'',sets:[{reps:10,weight:'',time:''}],rpe:0};r.exercises.push(ex);const log=getWeekLog(rid);const _selfTrn=currentClientId===currentUser.id;document.getElementById(`exblocks-${rid}`)?.insertAdjacentHTML('beforeend',renderExBlock(rid,ex,r.exercises.length-1,log,true,_selfTrn));};
-window.delExercise=(rid,exId)=>{if(!isCoachView())return;const r=getRtn(rid);if(!r)return;r.exercises=r.exercises.filter(e=>e.id!==exId);document.getElementById(`exblock-${rid}-${exId}`)?.remove();};
-window.updateExName=(rid,ei,val)=>{const r=getRtn(rid);if(!r||!r.exercises[ei])return;r.exercises[ei].name=val;};
-window.updateExNote=(rid,ei,val)=>{const r=getRtn(rid);if(!r||!r.exercises[ei])return;r.exercises[ei].note=val;};
-window.addSet=(rid,exId)=>{if(!isCoachView())return;const r=getRtn(rid);if(!r)return;const ex=r.exercises.find(e=>e.id===exId);if(!ex)return;const last=ex.sets[ex.sets.length-1]||{};ex.sets.push({reps:last.reps||10,weight:last.weight||'',time:last.time||''});const si=ex.sets.length-1;document.getElementById(`sets-${rid}-${exId}`)?.insertAdjacentHTML('beforeend',`<div class="set-row"><span class="set-num">${si+1}</span><input class="set-inp struct-readonly" type="text" value="—"><input class="set-inp struct-readonly" type="text" value="${last.reps||10}"><input class="set-inp struct-readonly" type="text" value="—"><span style="color:var(--muted2);font-size:9px;text-align:center">—</span><button class="set-del" onclick="delSet('${rid}',0,${si})">×</button></div>`);};
-window.delSet=(rid,ei,si)=>{if(!isCoachView())return;const r=getRtn(rid);if(!r||!r.exercises[ei])return;r.exercises[ei].sets.splice(si,1);renderTrnEditor();};
+window.saveRoutineAndToast=async(id)=>{
+  const inp=document.getElementById(`rtnname-${id}`);const r=getRtn(id);if(!r)return;
+  if(inp)r.name=inp.value.trim()||r.name;
+  await saveRoutinesToServer();renderRutinaDB();toast('Plantilla guardada ✓');
+};
 
-function ensureExLog(rid,exId){if(!TRN_LOG[THIS_WEEK])TRN_LOG[THIS_WEEK]={};if(!TRN_LOG[THIS_WEEK][rid])TRN_LOG[THIS_WEEK][rid]={done:false,exercises:{}};if(!TRN_LOG[THIS_WEEK][rid].exercises[exId])TRN_LOG[THIS_WEEK][rid].exercises[exId]={sets:[],rpe:0};return TRN_LOG[THIS_WEEK][rid].exercises[exId];}
-function ensureSetLog(rid,exId,si){const el=ensureExLog(rid,exId);while(el.sets.length<=si)el.sets.push({});return el.sets[si];}
-window.logSetVal=async(rid,exId,si,f,v)=>{const s=ensureSetLog(rid,exId,si);s[f]=f==='weight'||f==='reps'?+v:v;await saveTrainingLog(rid);renderTrnStats();};
-window.logSetDone=async(rid,exId,si,checked)=>{const s=ensureSetLog(rid,exId,si);s.done=checked;const row=document.querySelector(`#setrow-${rid}-${exId}-${si}`);if(row)row.querySelectorAll('.set-inp').forEach(i=>{checked?i.classList.add('done-val'):i.classList.remove('done-val');});await saveTrainingLog(rid);renderTrnStats();};
-window.logRpe=async(rid,exId,val)=>{const el=ensureExLog(rid,exId);el.rpe=val;const rpeRow=document.querySelector(`#exblock-${rid}-${exId} .rpe-row`);if(rpeRow)rpeRow.innerHTML=`<span class="rpe-lbl">RPE:</span>`+[...Array(10)].map((_,i)=>`<button class="rpebtn ${val===i+1?'on':''}" onclick="logRpe('${rid}','${exId}',${i+1})">${i+1}</button>`).join('');await saveTrainingLog(rid);};
-window.markRtnDone=async(rid,done)=>{if(!TRN_LOG[THIS_WEEK])TRN_LOG[THIS_WEEK]={};if(!TRN_LOG[THIS_WEEK][rid])TRN_LOG[THIS_WEEK][rid]={done:false,exercises:{}};TRN_LOG[THIS_WEEK][rid].done=done;await saveTrainingLog(rid);renderTrnSidebar();renderTrnEditor();renderTrnWeekBar();renderTrnStats();toast(done?'✅ Entrenamiento completado':'↺ Desmarcado');};
+// ── Exercise picker modal ──
+let _exPickerTarget=null; // rid or day label
+let _exPickerType=null;   // 'template' or 'day'
+let _exPickerMuscle='';
 
+window.openExPicker=function(target,type){
+  _exPickerTarget=target;_exPickerType=type;_exPickerMuscle='';
+  document.getElementById('exp-search').value='';
+  const muscles=[...new Set(EX_LIBRARY.map(e=>e.muscle_group||e.muscle||'').filter(Boolean))].sort();
+  const filters=document.getElementById('exp-muscle-filters');
+  if(filters)filters.innerHTML=`<button class="ex-pf-btn active" onclick="setExpMuscle(this,'')">Todos</button>`
+    +muscles.map(m=>`<button class="ex-pf-btn" onclick="setExpMuscle(this,'${m}')">${m}</button>`).join('');
+  renderExpList();
+  document.getElementById('modal-ex-picker').style.display='flex';
+  setTimeout(()=>document.getElementById('exp-search')?.focus(),80);
+};
+window.closeExPicker=()=>{document.getElementById('modal-ex-picker').style.display='none';};
+window.setExpMuscle=(btn,m)=>{
+  _exPickerMuscle=m;
+  document.querySelectorAll('.ex-pf-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  renderExpList();
+};
+window.renderExpList=()=>{
+  const q=(document.getElementById('exp-search')?.value||'').toLowerCase().trim();
+  let list=EX_LIBRARY;
+  if(_exPickerMuscle)list=list.filter(e=>(e.muscle_group||e.muscle||'')===_exPickerMuscle);
+  if(q)list=list.filter(e=>(e.name||'').toLowerCase().includes(q));
+  const c=document.getElementById('exp-list');if(!c)return;
+  c.innerHTML=!list.length
+    ?`<div style="padding:24px;text-align:center;color:var(--muted2);font-size:11px">Sin resultados</div>`
+    :list.map(e=>`<div class="ex-picker-item" onclick="applyExFromPicker('${e.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="ex-picker-name">${e.name}</div>
+          ${e.tips?`<div style="font-size:10px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.tips}</div>`:''}
+        </div>
+        <span class="ex-picker-muscle">${e.muscle_group||e.muscle||'—'}</span>
+      </div>`).join('');
+};
+window.applyExFromPicker=(libId)=>{
+  const libEx=EX_LIBRARY.find(e=>e.id===libId);if(!libEx)return;
+  const ex={id:'ex'+Date.now(),name:libEx.name,note:libEx.tips||'',sets:[{reps:10,weight:'',time:''}],rpe:0,lib_id:libEx.id};
+  if(_exPickerType==='day'){
+    if(!isCoachView())return;
+    ensureDayExsCopy(_exPickerTarget);
+    getSchedEntry(_exPickerTarget).exs.push(ex);
+    renderTrnEditor(_exPickerTarget);
+  }else{
+    if(!isCoachView())return;
+    const r=getRtn(_exPickerTarget);if(!r)return;
+    r.exercises.push(ex);renderRtnTemplate(_exPickerTarget);
+  }
+  closeExPicker();toast(`✓ "${ex.name}" añadido`);
+};
+
+// ── Ejercicios DB ──
+function renderExGlobal(){
+  const body=document.getElementById('ex-list-body');if(!body)return;
+  const cnt=document.getElementById('ex-count');if(cnt)cnt.textContent=EX_LIBRARY.length;
+  const q=(document.getElementById('ex-search')?.value||'').toLowerCase();
+  const list=EX_LIBRARY.filter(e=>!q||(e.name||'').toLowerCase().includes(q)||(e.muscle_group||e.muscle||'').toLowerCase().includes(q));
+  body.innerHTML=!list.length
+    ?`<div style="padding:14px;color:var(--muted2);font-size:11px;text-align:center">Sin ejercicios</div>`
+    :list.map(e=>`<div class="ex-list-item${e.id===currentExIdGlobal?' active':''}" onclick="selectExGlobal('${e.id}')">
+        <div>
+          <div class="ex-list-name">${e.name||'—'}</div>
+          <div class="ex-list-meta">${e.muscle_group||e.muscle||'—'}</div>
+        </div>
+      </div>`).join('');
+}
+window.selectExGlobal=(id)=>{currentExIdGlobal=id;renderExGlobal();renderExEditorGlobal(id);};
+
+function renderExEditorGlobal(id){
+  const area=document.getElementById('ex-editor-area');if(!area)return;
+  const ex=EX_LIBRARY.find(e=>e.id===id);
+  if(!ex){area.innerHTML=`<div class="ex-editor"><div style="padding:14px;color:var(--muted2);text-align:center">Selecciona un ejercicio</div></div>`;return;}
+  const coach=isCoachView();
+  area.innerHTML=`<div class="ex-editor">
+    <div class="ex-editor-head">
+      ${coach
+        ?`<input style="font-size:15px;font-weight:800;flex:1;background:transparent;border:none;color:var(--text);font-family:'Syne',sans-serif;outline:none;border-bottom:2px solid var(--border);padding:2px 4px" type="text" value="${(ex.name||'').replace(/"/g,'&quot;')}" oninput="patchExGlobal('${id}','name',this.value)">`
+        :`<span style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;flex:1">${ex.name||'—'}</span>`
+      }
+    </div>
+    <div class="ex-editor-body">
+      <div class="rec-section-label" style="margin-bottom:7px">Músculo principal</div>
+      ${coach
+        ?`<select style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;margin-bottom:11px" onchange="patchExGlobal('${id}','muscle_group',this.value)">${MUSCLES_LIST.map(m=>`<option value="${m}"${(ex.muscle_group||ex.muscle)===m?' selected':''}>${m}</option>`).join('')}</select>`
+        :`<div style="padding:5px 0 11px;font-size:13px">${ex.muscle_group||ex.muscle||'—'}</div>`
+      }
+      <div class="rec-section-label" style="margin-bottom:7px">GIF URL</div>
+      ${coach
+        ?`<input type="text" style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;box-sizing:border-box;margin-bottom:11px" value="${(ex.gif_url||'').replace(/"/g,'&quot;')}" placeholder="URL del GIF..." oninput="patchExGlobal('${id}','gif_url',this.value)">`
+        :ex.gif_url?`<img src="${ex.gif_url}" style="max-width:200px;border-radius:6px;margin-bottom:11px" onerror="this.style.display='none'">`:`<div style="color:var(--muted2);font-size:11px;margin-bottom:11px">Sin GIF</div>`
+      }
+      <div class="rec-section-label" style="margin-bottom:7px">Tips técnicos</div>
+      ${coach
+        ?`<textarea style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;resize:vertical;min-height:80px;box-sizing:border-box;line-height:1.6" placeholder="Errores comunes, técnica..." oninput="patchExGlobal('${id}','tips',this.value)">${(ex.tips||ex.notes||'').replace(/</g,'&lt;')}</textarea>`
+        :`<div style="font-size:11px;color:var(--muted2);line-height:1.6">${ex.tips||ex.notes||'—'}</div>`
+      }
+      ${coach?`<div style="display:flex;gap:7px;margin-top:13px;padding-top:11px;border-top:1px solid var(--border)">
+        <button class="btn sm" onclick="saveExGlobal('${id}')">💾 Guardar</button>
+        <button class="btn danger sm" onclick="deleteExGlobal('${id}')">🗑 Eliminar</button>
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+const _exGlobalPending={};
+window.patchExGlobal=(id,field,val)=>{
+  const ex=EX_LIBRARY.find(e=>e.id===id);if(!ex)return;
+  ex[field]=val;
+  if(!_exGlobalPending[id])_exGlobalPending[id]={};
+  _exGlobalPending[id][field]=val;
+};
+window.newExGlobal=async()=>{
+  if(!isCoachView()){toast('Solo el entrenador puede añadir ejercicios');return;}
+  const{data,error}=await sb.from('exercises_library').insert({name:'Nuevo ejercicio',muscle_group:'Core',coach_id:currentUser.id,tips:''}).select().single();
+  if(error){toast('Error: '+error.message);return;}
+  EX_LIBRARY.push(data);renderExGlobal();selectExGlobal(data.id);
+};
+window.saveExGlobal=async(id)=>{
+  const edits=_exGlobalPending[id];
+  if(!edits||!Object.keys(edits).length){toast('Sin cambios');return;}
+  const{error}=await sb.from('exercises_library').update(edits).eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  delete _exGlobalPending[id];toast('✓ Ejercicio guardado');
+};
+window.deleteExGlobal=async(id)=>{
+  if(!confirm('¿Eliminar este ejercicio de la base de datos global?'))return;
+  await sb.from('exercises_library').delete().eq('id',id);
+  EX_LIBRARY=EX_LIBRARY.filter(e=>e.id!==id);
+  currentExIdGlobal=null;renderExGlobal();
+  const area=document.getElementById('ex-editor-area');
+  if(area)area.innerHTML=`<div class="ex-editor"><div style="padding:14px;text-align:center;color:var(--muted2)">Ejercicio eliminado</div></div>`;
+};
+
+// ── stats ──
 function renderTrnStats(){
   const sa=document.getElementById('trn-stats-area');const sg=document.getElementById('trn-stats-grid');if(!sa||!sg)return;
-  const wd=TRN_LOG[THIS_WEEK]||{};const prevKeys=Object.keys(TRN_LOG).sort().filter(k=>k<THIS_WEEK);const pd=prevKeys.length?TRN_LOG[prevKeys[prevKeys.length-1]]:{};
-  const mVol={};let tDone=0,tR=0;
-  ROUTINES.forEach(r=>{const rl=wd[r.id]||{};if(rl.done)tDone++;tR++;(r.muscles||[]).forEach(m=>{if(!mVol[m])mVol[m]=0;Object.values(rl.exercises||{}).forEach(el=>{(el.sets||[]).forEach(s=>{if(s.done)mVol[m]+=((+s.weight||0)*(+s.reps||0));});});});});
-  let tv=0,pv=0;
-  Object.values(wd).forEach(rl=>{Object.values(rl.exercises||{}).forEach(el=>{(el.sets||[]).forEach(s=>{if(s.done)tv+=((+s.weight||0)*(+s.reps||0));});});});
-  Object.values(pd).forEach(rl=>{Object.values(rl.exercises||{}).forEach(el=>{(el.sets||[]).forEach(s=>{if(s.done)pv+=((+s.weight||0)*(+s.reps||0));});});});
-  const vd=tv-pv,vp=pv>0?Math.round(vd/pv*100):0;const maxMV=Math.max(...Object.values(mVol),1);
-  const mRows=Object.entries(mVol).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([m,v])=>`<div class="stat-row"><span>${m}</span><div class="vol-bar-wrap"><div class="vol-bar" style="width:${Math.round(v/maxMV*100)}%"></div></div><span class="sv">${v.toLocaleString()}kg</span></div>`).join('')||`<div class="stat-row" style="color:var(--muted2)">Sin datos esta semana</div>`;
-  const prRows=[];ROUTINES.forEach(r=>{(r.exercises||[]).forEach(ex=>{const tl=(wd[r.id]?.exercises||{})[ex.id]||{};const pl=(pd[r.id]?.exercises||{})[ex.id]||{};const tMax=Math.max(...(tl.sets||[]).filter(s=>s.done).map(s=>+s.weight||0),0);const pMax=Math.max(...(pl.sets||[]).filter(s=>s.done).map(s=>+s.weight||0),0);if(tMax>0){const diff=tMax-pMax;const cls=diff>0?'prog-up':diff<0?'prog-dn':'prog-eq';const arr=diff>0?`↑${diff}kg`:diff<0?`↓${Math.abs(diff)}kg`:'=';prRows.push(`<div class="stat-row"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:5px">${ex.name||'—'}</span><span class="${cls}" style="white-space:nowrap">${tMax}kg <span style="font-size:10px">${arr}</span></span></div>`);}});});
-  sg.innerHTML=`<div class="stat-card"><h4>📅 Semana ${THIS_WEEK}</h4><div class="stat-row"><span>Entrenamientos</span><span class="sv">${tDone}/${tR}</span></div><div class="stat-row"><span>Volumen total</span><span class="sv">${tv.toLocaleString()}kg</span></div><div class="stat-row"><span>vs sem. anterior</span><span class="sv ${vd>=0?'prog-up':'prog-dn'}">${pv>0?(vd>=0?'+':'')+vd+'kg':'—'}</span></div></div><div class="stat-card"><h4>🏋️ Vol. por músculo</h4>${mRows}</div><div class="stat-card" style="grid-column:1/-1"><h4>📈 Pesos máximos</h4><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0">${prRows.length?prRows.join(''):'<div class="stat-row" style="color:var(--muted2)">Completa series para ver progresión</div>'}</div></div>`;
+  const wd=TRN_LOG[THIS_WEEK]||{};
+  let tDone=0,tTotal=0,tv=0;
+  DAY_LABELS.forEach(day=>{
+    const{rid}=getSchedEntry(day);if(!rid)return;
+    tTotal++;
+    const dl=wd[day]||{};if(dl.done)tDone++;
+    Object.values(dl.exercises||{}).forEach(el=>{(el.sets||[]).forEach(s=>{if(s.done)tv+=((+s.weight||0)*(+s.reps||0));});});
+  });
+  const prRows=[];
+  DAY_LABELS.forEach(day=>{
+    const exs=getDayExs(day);const dl=wd[day]||{};
+    exs.forEach(ex=>{
+      const exLog=(dl.exercises||{})[ex.id]||{};
+      const tMax=Math.max(...(exLog.sets||[]).filter(s=>s.done).map(s=>+s.weight||0),0);
+      if(tMax>0&&ex.name)prRows.push(`<div class="stat-row"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:5px">${ex.name}<span style="color:var(--muted2);font-size:9px"> (${day})</span></span><span class="prog-up">${tMax}kg</span></div>`);
+    });
+  });
+  sg.innerHTML=`<div class="stat-card"><h4>📅 ${THIS_WEEK}</h4>
+    <div class="stat-row"><span>Días completados</span><span class="sv">${tDone}/${tTotal}</span></div>
+    <div class="stat-row"><span>Volumen total</span><span class="sv">${tv.toLocaleString()}kg</span></div>
+  </div>
+  <div class="stat-card" style="grid-column:1/-1"><h4>📈 Pesos máximos esta semana</h4>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0">
+      ${prRows.length?prRows.join(''):'<div class="stat-row" style="color:var(--muted2)">Completa series para ver datos</div>'}
+    </div>
+  </div>`;
   sa.style.display=(tDone>0||tv>0)?'block':'none';
 }
 
@@ -3008,9 +3424,9 @@ function showTab(name){
   }
   if(name==='compra'){checkPrices();renderCompra();}
   if(name==='stock'){renderRecipes();renderStockSidebar();}
-  if(name==='entreno'){renderTrnSidebar();renderTrnWeekBar();renderTrnStats();if(currentRtnId)renderTrnEditor();}
+  if(name==='entreno'){showTrnSec(currentTrnSec||'semana');}
   if(name==='progreso'){loadProgressFromServer().then(()=>{initProgressForm();renderProgress();});}
-  if(name==='ejercicios')renderExList();
+  // ejercicios panel now inside Entreno
   if(name==='notas'){
     setTimeout(()=>{
       const pn=document.getElementById('personal-notes');if(pn)pn.value=personalNotes;
@@ -3761,6 +4177,25 @@ function renderWeightLog(){
 document.getElementById('gif-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeGifModal(); });
 boot();
 </script>
+<!-- ═══ MODAL: EJERCICIO PICKER ═══ -->
+<div id="modal-ex-picker" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:min(560px,96vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="padding:16px 20px 12px;background:var(--card2);border-bottom:1px solid var(--border);border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">📚 Añadir desde Ejercicios DB</div>
+      <button onclick="closeExPicker()" style="background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <input id="exp-search" type="text" placeholder="Buscar ejercicio..." oninput="renderExpList()"
+        style="width:100%;background:var(--bg2,var(--surface));border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;box-sizing:border-box">
+      <div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap" id="exp-muscle-filters"></div>
+    </div>
+    <div id="exp-list" style="overflow-y:auto;flex:1;padding:4px 0"></div>
+    <div style="padding:10px 16px;border-top:1px solid var(--border);flex-shrink:0;font-size:10px;color:var(--muted2)">
+      ¿No está el ejercicio? Añádelo primero en <button onclick="closeExPicker();showTrnSec('ejerciciosdb');" style="background:none;border:none;color:var(--accent);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:10px;padding:0">🏋 Ejercicios DB</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </body>
 </html>
