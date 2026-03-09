@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>try{if(localStorage.getItem('efk-theme')==='light')document.documentElement.classList.add('light')}catch(e){}</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,6 +21,18 @@
   --text:#e8ede8;--muted:#4a544a;--muted2:#7a887a;
   --sidebar-w:256px;
 }
+/* ── LIGHT MODE ── */
+html.light body,body.light{
+  --bg:#f0f4f0;--surface:#e8ece8;--card:#ffffff;--card2:#f2f5f2;
+  --border:#d2d9d2;--border2:#c4ccc4;
+  --accent:#5a9e00;--accent2:#009578;--accent3:#a07800;
+  --red:#d03030;--orange:#b86800;--purple:#6a18b8;--blue:#1068b8;
+  --text:#1a201a;--muted:#8a988a;--muted2:#566056;
+}
+/* Smooth theme transition — exclude transitions that cause jank */
+body,body *{transition:background-color .22s ease,border-color .22s ease,color .22s ease,box-shadow .22s ease}
+/* But keep transform/opacity snappy */
+body *{transition:background-color .22s ease,border-color .22s ease,color .22s ease,box-shadow .22s ease,transform .15s ease,opacity .15s ease}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 input,select,textarea{font-size:16px!important}
@@ -768,14 +782,24 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
 
     <!-- Coach-only: GIF Library (hidden from clients) -->
     <div class="nav-item coach-only-nav" id="nav-giflib" data-tab="ejercicios" style="display:none" onclick="navItemClick(this,event)"><span class="nav-icon">🎬</span>Librería GIFs</div>
+    <!-- Coach-only: Ajustes -->
+    <div class="nav-item coach-only-nav" id="nav-ajustes" data-tab="ajustes" style="display:none" onclick="navItemClick(this,event)"><span class="nav-icon">⚙️</span>Ajustes</div>
   </nav>
 
   <div class="sb-bottom">
     <div class="sb-status">
       <div id="autosave-dot"></div>
       <div id="price-status-sidebar">💰 Precios...</div>
-      
     </div>
+    <button id="theme-toggle" onclick="toggleTheme()" style="
+      width:100%;background:none;border:1px solid var(--border);border-radius:7px;
+      color:var(--muted2);padding:7px 12px;cursor:pointer;font-family:'Syne',sans-serif;
+      font-weight:700;font-size:11px;display:flex;align-items:center;gap:8px;
+      margin-bottom:6px;transition:all .15s;
+    " onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted2)'">
+      <span id="theme-icon">☀️</span><span id="theme-label">Modo día</span>
+    </button>
     
     <div class="sb-user" onclick="confirmLogout()">
       <div class="sb-avatar" id="sb-avatar">?</div>
@@ -1284,6 +1308,133 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
     </div>
   </div>
 
+  <!-- AJUSTES (coach only) -->
+  <div id="panel-ajustes" class="panel">
+    <div style="max-width:680px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- API Keys card -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;overflow:hidden">
+        <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">🔑</span>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">API Keys</div>
+            <div style="font-size:10px;color:var(--muted2)">Se guardan cifradas en Supabase. Solo el entrenador puede verlas.</div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+
+          <!-- Supabase Service Role Key -->
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+              <span style="font-size:14px">🗄</span>
+              <div style="flex:1">
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px">Supabase Service Role Key</div>
+                <div style="font-size:10px;color:var(--muted2)">Para crear cuentas de clientes. Supabase → Settings → API → <code style="background:var(--card2);padding:1px 4px;border-radius:3px">service_role</code></div>
+              </div>
+              <div id="sb-key-status" style="font-size:10px;font-family:'Syne',sans-serif;font-weight:700;color:var(--muted2);white-space:nowrap">—</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="inp-sb-service-key" type="password" placeholder="eyJhbGci..." autocomplete="new-password"
+                style="flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .15s"
+                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+              <button class="btn ghost sm" onclick="toggleKeyVisibility('inp-sb-service-key')" title="Mostrar/ocultar" style="flex-shrink:0">👁</button>
+              <button class="btn sm" onclick="saveApiKey('supabase_service_key','inp-sb-service-key','sb-key-status')" style="flex-shrink:0">💾 Guardar</button>
+            </div>
+            <div style="margin-top:5px;display:flex;gap:5px;align-items:center">
+              <button class="btn ghost sm" onclick="editApiKey('inp-sb-service-key','supabase_service_key')" id="btn-edit-sb" style="display:none;font-size:10px">✏ Modificar clave actual</button>
+              <button class="btn danger sm" onclick="deleteApiKey('supabase_service_key','sb-key-status','btn-edit-sb','inp-sb-service-key')" id="btn-del-sb" style="display:none;font-size:10px">🗑 Borrar</button>
+            </div>
+          </div>
+
+          <div style="height:1px;background:var(--border)"></div>
+
+          <!-- Claude / Anthropic API Key -->
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+              <span style="font-size:14px">🤖</span>
+              <div style="flex:1">
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px">Claude API Key (Anthropic)</div>
+                <div style="font-size:10px;color:var(--muted2)">Para actualizar precios con IA. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--accent2);text-decoration:none">console.anthropic.com → API Keys</a></div>
+              </div>
+              <div id="claude-key-status" style="font-size:10px;font-family:'Syne',sans-serif;font-weight:700;color:var(--muted2);white-space:nowrap">—</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="inp-claude-key" type="password" placeholder="sk-ant-api03-..." autocomplete="new-password"
+                style="flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .15s"
+                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+              <button class="btn ghost sm" onclick="toggleKeyVisibility('inp-claude-key')" title="Mostrar/ocultar" style="flex-shrink:0">👁</button>
+              <button class="btn sm" onclick="saveApiKey('anthropic_key','inp-claude-key','claude-key-status')" style="flex-shrink:0">💾 Guardar</button>
+            </div>
+            <div style="margin-top:5px;display:flex;gap:5px;align-items:center">
+              <button class="btn ghost sm" onclick="editApiKey('inp-claude-key','anthropic_key')" id="btn-edit-claude" style="display:none;font-size:10px">✏ Modificar clave actual</button>
+              <button class="btn danger sm" onclick="deleteApiKey('anthropic_key','claude-key-status','btn-edit-claude','inp-claude-key')" id="btn-del-claude" style="display:none;font-size:10px">🗑 Borrar</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Gestión de clientes card -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;overflow:hidden">
+        <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">👥</span>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">Gestión de clientes</div>
+            <div style="font-size:10px;color:var(--muted2)">Crea cuentas para tus clientes. Necesitas la Supabase Service Role Key.</div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:10px;color:var(--muted2);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:700">Nombre completo</div>
+              <input id="new-client-name" type="text" placeholder="Ana García"
+                style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none">
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted2);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:700">Email</div>
+              <input id="new-client-email" type="email" placeholder="ana@email.com"
+                style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:10px;color:var(--muted2);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:700">Contraseña temporal</div>
+              <input id="new-client-pass" type="text" placeholder="Mín. 8 caracteres"
+                style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none">
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn" style="width:100%;justify-content:center" onclick="createClientAccount()">➕ Crear cliente</button>
+            </div>
+          </div>
+          <div id="create-client-log" style="font-size:11px;color:var(--muted2);font-family:'JetBrains Mono',monospace;min-height:18px"></div>
+        </div>
+      </div>
+
+      <!-- Precios IA card -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;overflow:hidden">
+        <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">💰</span>
+          <div style="flex:1">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">Actualización de precios con IA</div>
+            <div style="font-size:10px;color:var(--muted2)">Claude estima precios de todos los ingredientes. Se comparte con todos los clientes.</div>
+          </div>
+          <div id="price-update-status" style="font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace;text-align:right"></div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn teal" onclick="runAiPriceUpdate()" id="btn-ai-prices" style="gap:6px">
+              🤖 Actualizar precios ahora
+            </button>
+            <button class="btn ghost sm" onclick="fetchMercadonaPrices()">🏪 Solo Mercadona</button>
+            <div id="ai-price-progress" style="font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace"></div>
+          </div>
+          <div id="ai-price-log" style="font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace;max-height:120px;overflow-y:auto;background:var(--card2);border-radius:5px;padding:7px;display:none"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div><!-- /app-main -->
 
 <script type="module">
@@ -1581,7 +1732,11 @@ async function boot() {
     document.getElementById('app-loading').classList.add('hidden');
     // GIF Library only visible to coaches
     const gifNav = document.getElementById('nav-giflib');
-    if(gifNav) gifNav.style.display = (currentProfile?.role==='coach') ? 'flex' : 'none';
+    const ajNav  = document.getElementById('nav-ajustes');
+    const isCoach = currentProfile?.role === 'coach';
+    if(gifNav) gifNav.style.display = isCoach ? 'flex' : 'none';
+    if(ajNav)  ajNav.style.display  = isCoach ? 'flex' : 'none';
+    if(isCoach) loadApiKeys();
     renderResumen();
   }
 }
@@ -3285,6 +3440,265 @@ function buildProgressSVG(entries,id){
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:200px"><defs><linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".18"/><stop offset="100%" stop-color="var(--accent)" stop-opacity=".01"/></linearGradient></defs><path d="${areaPath}" fill="url(#${uid})"/><path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>${dots}${xLabels}</svg>`;
 }
 
+
+// ══════════════════════════════════════════════════════
+//  AJUSTES — API Keys, Client Management, AI Prices
+// ══════════════════════════════════════════════════════
+// Cache: matches real app_settings columns
+let _apiKeys = { supabase_service_key: '', anthropic_key: '', last_price_update: null };
+
+async function loadApiKeys() {
+  if (!isCoachView()) return;
+  try {
+    const { data } = await sb.from('app_settings')
+      .select('anthropic_key, rapidapi_key, supabase_service_key, last_price_update')
+      .eq('user_id', currentUser.id).maybeSingle();
+    if (data) {
+      _apiKeys.anthropic_key       = data.anthropic_key || '';
+      _apiKeys.supabase_service_key = data.supabase_service_key || '';
+      _apiKeys.last_price_update    = data.last_price_update || null;
+    }
+    _syncKeyStatuses();
+    _checkAutoPriceUpdate();
+  } catch(e) { console.warn('loadApiKeys:', e); }
+}
+
+function _syncKeyStatuses() {
+  _syncOneKey('sb-key-status', 'inp-sb-service-key', 'btn-edit-sb', 'btn-del-sb', _apiKeys.supabase_service_key);
+  _syncOneKey('claude-key-status', 'inp-claude-key', 'btn-edit-claude', 'btn-del-claude', _apiKeys.anthropic_key);
+  const lastEl = document.getElementById('price-update-status');
+  if (lastEl && _apiKeys.last_price_update) {
+    const d = new Date(_apiKeys.last_price_update);
+    lastEl.textContent = 'Última: ' + d.toLocaleDateString('es-ES') + ' ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  }
+}
+
+function _syncOneKey(statusId, inputId, editBtnId, delBtnId, val) {
+  const statusEl = document.getElementById(statusId);
+  const inp      = document.getElementById(inputId);
+  const editBtn  = document.getElementById(editBtnId);
+  const delBtn   = document.getElementById(delBtnId);
+  if (val) {
+    if (statusEl) { statusEl.textContent = '✅ Guardada'; statusEl.style.color = 'var(--accent)'; }
+    // Show masked value in input (read-only until "Modificar" clicked)
+    if (inp) { inp.value = val; inp.readOnly = true; inp.style.color = 'var(--muted2)'; inp.style.letterSpacing = '2px'; }
+    if (editBtn) editBtn.style.display = 'inline-flex';
+    if (delBtn)  delBtn.style.display  = 'inline-flex';
+  } else {
+    if (statusEl) { statusEl.textContent = '⚠ No configurada'; statusEl.style.color = 'var(--muted2)'; }
+    if (inp) { inp.value = ''; inp.readOnly = false; inp.style.color = ''; inp.style.letterSpacing = ''; }
+    if (editBtn) editBtn.style.display = 'none';
+    if (delBtn)  delBtn.style.display  = 'none';
+  }
+}
+
+window.editApiKey = (inputId, keyName) => {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.readOnly = false;
+  inp.style.color = '';
+  inp.style.letterSpacing = '';
+  inp.type = 'text';
+  inp.select();
+  inp.focus();
+};
+
+window.deleteApiKey = async (keyName, statusId, editBtnId, inputId) => {
+  if (!confirm('¿Seguro que quieres borrar esta clave?')) return;
+  _apiKeys[keyName] = '';
+  try {
+    const uid = currentUser.id;
+    const { data: existing } = await sb.from('app_settings').select('id').eq('user_id', uid).maybeSingle();
+    if (existing?.id) {
+      const { error } = await sb.from('app_settings').update({ [keyName]: null }).eq('id', existing.id);
+      if (error) throw error;
+    }
+    _syncKeyStatuses();
+    toast('🗑 Clave eliminada');
+  } catch(e) { toast('Error: ' + e.message); }
+};
+
+// keyName: 'anthropic_key' | 'supabase_service_key'
+window.saveApiKey = async (keyName, inputId, statusId) => {
+  if (!isCoachView()) return;
+  const val = document.getElementById(inputId)?.value?.trim();
+  if (!val) { toast('⚠ Introduce la clave primero'); return; }
+  _apiKeys[keyName] = val;
+  try {
+    await _saveApiKeys();
+    _syncKeyStatuses();
+    toast('🔑 Clave guardada');
+  } catch(e) {
+    toast('Error al guardar: ' + e.message);
+  }
+};
+
+// Save ALL keys in one operation using select-then-update/insert to avoid duplicates
+async function _saveApiKeys() {
+  const uid = currentUser.id;
+  // Check if row exists
+  const { data: existing } = await sb.from('app_settings').select('id').eq('user_id', uid).maybeSingle();
+  const payload = {};
+  if (_apiKeys.anthropic_key)         payload.anthropic_key        = _apiKeys.anthropic_key;
+  if (_apiKeys.supabase_service_key)  payload.supabase_service_key = _apiKeys.supabase_service_key;
+  let err;
+  if (existing?.id) {
+    // UPDATE existing row
+    ({ error: err } = await sb.from('app_settings').update(payload).eq('id', existing.id));
+  } else {
+    // INSERT new row
+    ({ error: err } = await sb.from('app_settings').insert({ user_id: uid, ...payload }));
+  }
+  if (err) throw err;
+}
+
+window.toggleKeyVisibility = (inputId) => {
+  const el = document.getElementById(inputId);
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
+};
+
+// ── Crear cliente via Edge Function create-client ──
+window.createClientAccount = async () => {
+  if (!isCoachView()) return;
+  const name  = document.getElementById('new-client-name')?.value?.trim();
+  const email = document.getElementById('new-client-email')?.value?.trim();
+  const pass  = document.getElementById('new-client-pass')?.value?.trim();
+  const log   = document.getElementById('create-client-log');
+
+  if (!name || !email || !pass) { log.textContent = '⚠ Rellena todos los campos'; log.style.color='var(--orange)'; return; }
+  if (pass.length < 6)          { log.textContent = '⚠ Contraseña mínimo 6 caracteres'; log.style.color='var(--orange)'; return; }
+
+  log.textContent = '⏳ Creando cuenta...'; log.style.color = 'var(--muted2)';
+
+  try {
+    const { data: result, error: fnErr2 } = await sb.functions.invoke('create-client', {
+      body: { email, password: pass, full_name: name }
+    });
+    if (fnErr2) throw new Error(fnErr2.message || String(fnErr2));
+    if (result?.error) throw new Error(result.error);
+
+    log.innerHTML = `✅ Cliente creado: <strong>${name}</strong> · ${email} · pass: <code>${pass}</code>`;
+    log.style.color = 'var(--accent)';
+    document.getElementById('new-client-name').value = '';
+    document.getElementById('new-client-email').value = '';
+    document.getElementById('new-client-pass').value = '';
+    await loadClients();
+    toast(`✅ Cliente "${name}" creado`);
+  } catch(e) {
+    log.textContent = '❌ Error: ' + e.message;
+    log.style.color = 'var(--red)';
+  }
+};
+
+// ── Auto price update check: once per day ──
+function _checkAutoPriceUpdate() {
+  if (!isCoachView()) return;
+  if (!_apiKeys.anthropic_key) return;
+  const last = _apiKeys.last_price_update;
+  if (!last) { runAiPriceUpdate(); return; }
+  const hoursSince = (Date.now() - new Date(last).getTime()) / 3600000;
+  if (hoursSince >= 24) runAiPriceUpdate();
+}
+
+// ── AI price update using Claude ──
+window.runAiPriceUpdate = async () => {
+  if (!isCoachView()) { toast('Solo el coach puede actualizar precios'); return; }
+  const claudeKey = _apiKeys.anthropic_key;
+  if (!claudeKey) {
+    toast('⚠ Configura la Claude API Key en Ajustes → API Keys');
+    navItemClick(document.querySelector('[data-tab="ajustes"]'));
+    return;
+  }
+
+  const btn      = document.getElementById('btn-ai-prices');
+  const progress = document.getElementById('ai-price-progress');
+  const logEl    = document.getElementById('ai-price-log');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Actualizando...'; }
+  if (logEl) { logEl.style.display = 'block'; logEl.textContent = ''; }
+
+  const products = Object.keys(PRICES).length > 0
+    ? Object.keys(PRICES)
+    : Object.keys(DB);
+
+  const log = (msg) => {
+    if (logEl) { logEl.textContent += msg + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+    if (progress) progress.textContent = msg;
+  };
+
+  log('🤖 Llamando a Edge Function → Claude...');
+
+  try {
+    const productList = products;
+
+    // Use sb.functions.invoke — handles session JWT automatically, avoids 401
+    const { data, error: fnErr } = await sb.functions.invoke('ai-prices', {
+      body: { products: productList }
+    });
+    if (fnErr) throw new Error(fnErr.message || String(fnErr));
+    if (data?.error) throw new Error(data.error);
+
+    // Edge function returns raw Anthropic response: { content: [{type:'text', text:'...'}] }
+    const rawText = data.content?.[0]?.text || '';
+    if (!rawText) throw new Error('Respuesta vacía de Claude');
+    log('✓ Respuesta recibida. Procesando...');
+
+    let prices;
+    try {
+      const cleaned = rawText.replace(/```json|```/g, '').trim();
+      prices = JSON.parse(cleaned);
+    } catch(pe) {
+      throw new Error('Claude no devolvió JSON válido: ' + rawText.slice(0, 200));
+    }
+    if (!prices || typeof prices !== 'object') throw new Error('JSON inválido en respuesta');
+
+    let updated = 0;
+    for (const [prod, vals] of Object.entries(prices)) {
+      if (!PRICES[prod]) PRICES[prod] = {};
+      if (vals.merc      != null) PRICES[prod].merc      = vals.merc;
+      if (vals.lidl      != null) PRICES[prod].lidl      = vals.lidl;
+      if (vals.carrefour != null) PRICES[prod].carrefour = vals.carrefour;
+      if (vals.dia       != null) PRICES[prod].dia       = vals.dia;
+      if (vals.eroski    != null) PRICES[prod].eroski    = vals.eroski;
+      if (vals.base      != null) PRICES[prod].base      = vals.base;
+      updated++;
+    }
+    log(`✅ ${updated} productos actualizados`);
+
+    // Save to server (shared with all clients)
+    const coachId = currentUser.id;
+    const rows = Object.entries(PRICES).map(([product, v]) => ({
+      coach_id: coachId, product,
+      merc: v.merc||null, lidl: v.lidl||null,
+      carrefour: v.carrefour||null, dia: v.dia||null, eroski: v.eroski||null,
+      base_unit: v.base||null
+    }));
+    if (rows.length > 0) {
+      const { error: pErr } = await sb.from('prices').upsert(rows, { onConflict: 'coach_id,product' });
+      if (pErr) log('⚠ Error guardando: ' + pErr.message);
+      else log('💾 Precios guardados en Supabase (visible a todos los clientes)');
+    }
+
+    // Save last update timestamp
+    _apiKeys.last_price_update = new Date().toISOString();
+    try {
+      const uid = currentUser.id;
+      const { data: ex2 } = await sb.from('app_settings').select('id').eq('user_id', uid).maybeSingle();
+      if (ex2?.id) await sb.from('app_settings').update({ last_price_update: _apiKeys.last_price_update }).eq('id', ex2.id);
+    } catch(e) { console.warn('last_price_update save:', e); }
+
+    _syncKeyStatuses();
+    renderCompra();
+    toast('💰 Precios actualizados con IA ✓');
+
+  } catch(e) {
+    log('❌ Error: ' + e.message);
+    toast('Error actualizando precios: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🤖 Actualizar precios ahora'; }
+    if (progress) setTimeout(() => { progress.textContent = ''; }, 4000);
+  }
+};
+
 // ══════════════════════════════════════════════════════
 //  NOTES
 // ══════════════════════════════════════════════════════
@@ -3569,6 +3983,7 @@ function showTab(name){
   if(name==='compra'){checkPrices();renderCompra();}
   if(name==='stock'){renderRecipes();renderStockSidebar();}
   if(name==='entreno'){renderTrnSidebar();renderTrnWeekBar();renderTrnStats();renderTrnEditor();if(trnTabMode==='progress')renderTrnProgress();}
+  else if(name==='ajustes'){_syncKeyStatuses?.();}
   if(name==='progreso'){loadProgressFromServer().then(()=>{initProgressForm();renderProgress();});}
   if(name==='ejercicios')renderExList();
   if(name==='notas'){
@@ -4320,6 +4735,25 @@ function renderWeightLog(){
 // ── BOOT ──
 document.getElementById('gif-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeGifModal(); });
 boot();
+
+// ── THEME TOGGLE ──
+function applyTheme(light){
+  document.body.classList.toggle('light', light);document.documentElement.classList.toggle('light', light);
+  const icon = document.getElementById('theme-icon');
+  const lbl  = document.getElementById('theme-label');
+  if(icon) icon.textContent = light ? '🌙' : '☀️';
+  if(lbl)  lbl.textContent  = light ? 'Modo noche' : 'Modo día';
+  try { localStorage.setItem('efk-theme', light ? 'light' : 'dark'); } catch(e){}
+}
+window.toggleTheme = () => applyTheme(!document.body.classList.contains('light'));
+
+// Apply saved theme immediately (before DOMContentLoaded to avoid flash)
+(function(){
+  try {
+    const saved = localStorage.getItem('efk-theme');
+    if(saved === 'light'){document.body.classList.add('light');document.documentElement.classList.add('light');}
+  } catch(e){}
+})();
 </script>
 <div id="toast"></div>
 </body>
