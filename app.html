@@ -2833,7 +2833,10 @@ function renderRecipes(){
   const byDay={};Object.keys(DIET).forEach(d=>{byDay[d]=[];});
   recs.forEach(r=>{if(byDay[r.day])byDay[r.day].push(r);});
   let html='';
-  Object.entries(byDay).forEach(([day,dr])=>{
+  const DIET_DAY_ORDER=['LUNES','MARTES','MIERCOLES','MIÉRCOLES','JUEVES','VIERNES','SABADO','SÁBADO','DOMINGO','LUN','MAR','MIE','MIÉ','JUE','VIE','SAB','SÁB','DOM'];
+  const norm=s=>s.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const sortedDays=Object.entries(byDay).sort(([a],[b])=>{const ia=DIET_DAY_ORDER.findIndex(d=>d===norm(a));const ib=DIET_DAY_ORDER.findIndex(d=>d===norm(b));return(ia===-1?99:ia)-(ib===-1?99:ib);});
+  sortedDays.forEach(([day,dr])=>{
     if(!dr.length)return;
     const dd=dr.filter(r=>COOKED[r.id]).length,dp=Math.round(dd/dr.length*100);
     const mls=dr.map(r=>{const cooked=!!COOKED[r.id];const chips=r.items.map(i=>`<span class="rc-chip"><span class="cq">${i.qty}${i.u==='ud'?'':i.u}</span> ${i.p}</span>`).join('');const btns=cooked?`<button class="rc-undo-btn" onclick="uncook('${r.id}')">↺</button>`:`<button class="rc-cook-btn" onclick="cook('${r.id}')">🍳 Cocinar</button>`;return`<div class="recipe-card ${cooked?'cooked':''}"><div class="rc-head"><span class="rc-label">${MEAL_LABELS[r.meal]||r.meal}</span><div style="display:flex;align-items:center;gap:5px">${btns}</div></div><div class="rc-items">${chips}</div></div>`;}).join('');
