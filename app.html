@@ -791,7 +791,7 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
     <div class="nav-item" data-tab="stock" onclick="navItemClick(this,event)"><span class="nav-icon">📦</span>Stock</div>
 
     <!-- Chat -->
-    <div class="nav-item" data-tab="chat" onclick="navItemClick(this,event)"><span class="nav-icon">💬</span>Chat</div>
+    <div class="nav-item" data-tab="chat" onclick="navItemClick(this,event)"><span class="nav-icon">💬</span>Chat<span id="chat-unread-badge" style="display:none;margin-left:auto;background:var(--red,#f55);color:#fff;font-size:9px;font-family:'Syne',sans-serif;font-weight:800;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center">0</span></div>
 
     <!-- Perfil (includes Progreso) -->
     <div class="nav-sep" style="margin:8px 8px 5px"></div>
@@ -1371,6 +1371,37 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
   <!-- AJUSTES (coach only) -->
   <div id="panel-ajustes" class="panel">
     <div style="max-width:680px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- SQL Chat migration card -->
+      <div style="background:var(--card);border:1px solid rgba(79,242,194,.25);border-radius:11px;overflow:hidden">
+        <div style="padding:12px 16px;background:rgba(79,242,194,.06);border-bottom:1px solid rgba(79,242,194,.15);display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">🗄</span>
+          <div style="flex:1">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">SQL — Tabla de Chat</div>
+            <div style="font-size:10px;color:var(--muted2)">Ejecuta esto una vez en Supabase → SQL Editor para activar el chat.</div>
+          </div>
+          <button class="btn ghost sm" onclick="navigator.clipboard.writeText(document.getElementById('chat-sql').textContent).then(()=>toast('SQL copiado ✓'))">📋 Copiar</button>
+        </div>
+        <pre id="chat-sql" style="margin:0;padding:14px 16px;font-size:10px;color:var(--accent2);font-family:'JetBrains Mono',monospace;overflow-x:auto;line-height:1.7;background:transparent;white-space:pre">create table if not exists public.client_messages (
+  id bigint generated always as identity primary key,
+  client_id uuid not null references auth.users(id) on delete cascade,
+  coach_id  uuid not null references auth.users(id) on delete cascade,
+  sender_id uuid not null references auth.users(id) on delete cascade,
+  sender_role text not null check (sender_role in ('coach','client')),
+  message text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.client_messages enable row level security;
+
+-- Coach puede leer/escribir todos los mensajes de sus clientes
+create policy "coach_rw" on public.client_messages
+  for all using (coach_id = auth.uid());
+
+-- Cliente solo ve sus propios mensajes
+create policy "client_rw" on public.client_messages
+  for all using (client_id = auth.uid());</pre>
+      </div>
 
       <!-- API Keys card -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;overflow:hidden">
@@ -2021,7 +2052,9 @@ async function switchClient(clientId) {
   // Restart chat if panel is open
   const chatPanel = document.getElementById('panel-chat');
   if(chatPanel?.classList.contains('active')){
-    chatMessages=[]; loadChat().then(()=>startChatPolling());
+    chatMessages=[]; loadChat().then(()=>{ markChatRead(); startChatPolling(); });
+  } else {
+    checkUnreadForClient(clientId);
   }
   toast('✓ ' + (isSelf ? 'Viendo tus datos' : selectedText));
 }
@@ -3910,10 +3943,8 @@ function renderNotasPanel(){
   const isSelf = currentClientId === currentUser?.id;
   const feedbackEscaped = (coachFeedback||'').replace(/</g,'&lt;');
   const personalEscaped = (coach ? (coachClientNotes.personal||'') : (personalNotes||'')).replace(/</g,'&lt;');
-  const qrEscaped = (coachClientNotes.quickRules||'').replace(/</g,'&lt;');
-  const supEscaped = (coachClientNotes.supplements||'').replace(/</g,'&lt;');
-  const qrDefault = DEFAULT_QUICK_RULES;
-  const supDefault = DEFAULT_SUPPLEMENTS;
+  const qrEscaped  = (coachClientNotes.quickRules  || DEFAULT_QUICK_RULES).replace(/</g,'&lt;');
+  const supEscaped = (coachClientNotes.supplements || DEFAULT_SUPPLEMENTS).replace(/</g,'&lt;');
 
   let html = `<div class="sec" style="margin-bottom:12px">\u{1F4DD} NOTAS${coach&&!isSelf?' \u2014 '+clientName:''}</div><div class="notes-grid">`;
 
@@ -3922,12 +3953,12 @@ function renderNotasPanel(){
       <div class="note-card">
         <h4>\u{1F4A7} Reglas r\u00e1pidas</h4>
         <textarea style="width:100%;min-height:90px;background:transparent;border:1px dashed var(--border);border-radius:5px;color:var(--text);font-size:11px;line-height:1.6;padding:6px;resize:vertical;font-family:inherit;outline:none;box-sizing:border-box"
-          placeholder="${qrDefault}" oninput="saveCoachNotesField('quickRules',this.value)">${qrEscaped}</textarea>
+          oninput="saveCoachNotesField('quickRules',this.value)">${qrEscaped}</textarea>
       </div>
       <div class="note-card">
         <h4>\u{1F3CB} Suplementos</h4>
         <textarea style="width:100%;min-height:90px;background:transparent;border:1px dashed var(--border);border-radius:5px;color:var(--text);font-size:11px;line-height:1.6;padding:6px;resize:vertical;font-family:inherit;outline:none;box-sizing:border-box"
-          placeholder="${supDefault}" oninput="saveCoachNotesField('supplements',this.value)">${supEscaped}</textarea>
+          oninput="saveCoachNotesField('supplements',this.value)">${supEscaped}</textarea>
       </div>
       <div class="note-card" style="grid-column:span 2">
         <h4>\u{1F5D2} Notas privadas${isSelf?' personales':' sobre '+clientName} <span style="font-size:9px;color:var(--muted2);font-weight:400">(solo las ves t\u00fa)</span></h4>
@@ -3942,8 +3973,8 @@ function renderNotasPanel(){
       </div>`:''}
     `;
   } else {
-    const qrHtml = (coachClientNotes.quickRules||qrDefault).replace(/\n/g,'<br>');
-    const supHtml = (coachClientNotes.supplements||supDefault).replace(/\n/g,'<br>');
+    const qrHtml = (coachClientNotes.quickRules||DEFAULT_QUICK_RULES).replace(/\n/g,'<br>');
+    const supHtml = (coachClientNotes.supplements||DEFAULT_SUPPLEMENTS).replace(/\n/g,'<br>');
     html += `
       <div class="note-card"><h4>\u{1F4A7} Reglas r\u00e1pidas</h4><div style="font-size:11px;line-height:1.8;color:var(--muted2)">${qrHtml}</div></div>
       <div class="note-card"><h4>\u{1F3CB} Suplementos</h4><div style="font-size:11px;line-height:1.8;color:var(--muted2)">${supHtml}</div></div>
@@ -4257,7 +4288,7 @@ function showTab(name){
   if(name==='chat'){
     stopChatPolling();
     chatMessages=[];
-    loadChat().then(()=>startChatPolling());
+    loadChat().then(()=>{ markChatRead(); startChatPolling(); });
   }
   if(name==='perfil') initProfilePanel();
 }
@@ -5066,7 +5097,8 @@ function renderWeightLog(){
 // ══════════════════════════════════════════════════════
 let chatMessages = [];
 let chatPollingInterval = null;
-let lastChatMsgId = null;
+let lastChatTimestamp = null;  // ISO string — filtramos por created_at, no por UUID
+const chatSeenIds = new Set();  // deduplicar por id
 
 function getChatLabel(){
   if(isCoachView()){
@@ -5081,6 +5113,9 @@ async function loadChat(){
   if(!currentClientId) return;
   const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
   if(!coachId) return;
+  chatMessages = [];
+  chatSeenIds.clear();
+  lastChatTimestamp = null;
   const { data, error } = await sb
     .from('client_messages')
     .select('*')
@@ -5089,8 +5124,8 @@ async function loadChat(){
     .order('created_at', { ascending: true })
     .limit(200);
   if(error){ console.warn('chat load error', error.message); return; }
-  chatMessages = data || [];
-  lastChatMsgId = chatMessages.length ? chatMessages[chatMessages.length-1].id : null;
+  (data||[]).forEach(m => { chatSeenIds.add(m.id); chatMessages.push(m); });
+  if(chatMessages.length) lastChatTimestamp = chatMessages[chatMessages.length-1].created_at;
   renderChat();
 }
 
@@ -5102,12 +5137,20 @@ async function pollNewMessages(){
     .eq('client_id', currentClientId)
     .eq('coach_id', coachId)
     .order('created_at', { ascending: true });
-  if(lastChatMsgId) query = query.gt('id', lastChatMsgId);
+  // Filtrar solo mensajes más nuevos que el último que tenemos
+  if(lastChatTimestamp) query = query.gt('created_at', lastChatTimestamp);
   const { data } = await query.limit(50);
   if(data && data.length){
-    chatMessages = chatMessages.concat(data);
-    lastChatMsgId = chatMessages[chatMessages.length-1].id;
-    renderChat();
+    let added = false;
+    data.forEach(m => {
+      if(!chatSeenIds.has(m.id)){
+        chatSeenIds.add(m.id);
+        chatMessages.push(m);
+        lastChatTimestamp = m.created_at;
+        added = true;
+      }
+    });
+    if(added){ renderChat(); markChatRead(); }
   }
 }
 
@@ -5117,6 +5160,30 @@ function startChatPolling(){
 }
 function stopChatPolling(){
   if(chatPollingInterval){ clearInterval(chatPollingInterval); chatPollingInterval=null; }
+}
+
+function chatReadKey(){ return `ek_chat_read_${currentClientId}`; }
+function markChatRead(){
+  if(!lastChatTimestamp) return;
+  localStorage.setItem(chatReadKey(), lastChatTimestamp);
+  updateChatBadge(0);
+}
+function updateChatBadge(count){
+  const badge = document.getElementById('chat-unread-badge');
+  if(!badge) return;
+  if(count > 0){ badge.textContent = count > 9 ? '9+' : count; badge.style.display = 'block'; }
+  else { badge.style.display = 'none'; }
+}
+async function checkUnreadForClient(clientId){
+  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+  if(!coachId || !clientId) return;
+  const readTs = localStorage.getItem(`ek_chat_read_${clientId}`);
+  let query = sb.from('client_messages').select('id', {count:'exact',head:true})
+    .eq('client_id', clientId).eq('coach_id', coachId)
+    .neq('sender_id', currentUser.id);
+  if(readTs) query = query.gt('created_at', readTs);
+  const { count } = await query;
+  updateChatBadge(count || 0);
 }
 
 function renderChat(){
@@ -5163,18 +5230,22 @@ window.sendChatMessage = async () => {
   const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
   if(!coachId) return;
   inp.value = '';
+  inp.focus();
   const msg = {
     client_id: currentClientId,
     coach_id: coachId,
     sender_id: currentUser.id,
     sender_role: currentProfile.role,
-    message: text,
-    created_at: new Date().toISOString()
+    message: text
   };
   const { data, error } = await sb.from('client_messages').insert(msg).select().single();
   if(error){ toast('Error enviando mensaje: '+error.message); inp.value=text; return; }
-  chatMessages.push(data);
-  lastChatMsgId = data.id;
+  // Añadir solo si no lo tenemos ya (evitar duplicados con el poll)
+  if(!chatSeenIds.has(data.id)){
+    chatSeenIds.add(data.id);
+    chatMessages.push(data);
+    lastChatTimestamp = data.created_at;
+  }
   renderChat();
 };
 
