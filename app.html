@@ -2052,7 +2052,7 @@ async function switchClient(clientId) {
   // Restart chat if panel is open
   const chatPanel = document.getElementById('panel-chat');
   if(chatPanel?.classList.contains('active')){
-    chatMessages=[]; loadChat().then(()=>{ markChatRead(); startChatPolling(); });
+    loadChat().then(startChatPolling);
   } else {
     checkUnreadForClient(clientId);
   }
@@ -4287,8 +4287,8 @@ function showTab(name){
   }
   if(name==='chat'){
     stopChatPolling();
-    chatMessages=[];
-    loadChat().then(()=>{ markChatRead(); startChatPolling(); });
+    
+    loadChat().then(startChatPolling);
   }
   if(name==='perfil') initProfilePanel();
 }
@@ -5095,10 +5095,10 @@ function renderWeightLog(){
 // ══════════════════════════════════════════════════════
 //  💬 CHAT
 // ══════════════════════════════════════════════════════
-let chatMessages = [];
+// ══ CHAT ══
 let chatPollingInterval = null;
-let lastChatTimestamp = null;  // ISO string — filtramos por created_at, no por UUID
-const chatSeenIds = new Set();  // deduplicar por id
+// Usamos un Map<id, msg> como única fuente de verdad — deduplicación automática
+const chatMap = new Map();
 
 function getChatLabel(){
   if(isCoachView()){
@@ -5109,81 +5109,51 @@ function getChatLabel(){
   return 'Tu entrenador';
 }
 
+function getChatCoachId(){
+  return currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+}
+
 async function loadChat(){
   if(!currentClientId) return;
-  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+  const coachId = getChatCoachId();
   if(!coachId) return;
-  chatMessages = [];
-  chatSeenIds.clear();
-  lastChatTimestamp = null;
+  chatMap.clear();
   const { data, error } = await sb
     .from('client_messages')
     .select('*')
     .eq('client_id', currentClientId)
     .eq('coach_id', coachId)
     .order('created_at', { ascending: true })
-    .limit(200);
+    .limit(300);
   if(error){ console.warn('chat load error', error.message); return; }
-  (data||[]).forEach(m => { chatSeenIds.add(m.id); chatMessages.push(m); });
-  if(chatMessages.length) lastChatTimestamp = chatMessages[chatMessages.length-1].created_at;
+  (data||[]).forEach(m => chatMap.set(m.id, m));
   renderChat();
 }
 
-async function pollNewMessages(){
+async function pollChat(){
   if(!currentClientId) return;
-  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+  const coachId = getChatCoachId();
   if(!coachId) return;
-  let query = sb.from('client_messages').select('*')
+  const { data } = await sb
+    .from('client_messages')
+    .select('*')
     .eq('client_id', currentClientId)
     .eq('coach_id', coachId)
-    .order('created_at', { ascending: true });
-  // Filtrar solo mensajes más nuevos que el último que tenemos
-  if(lastChatTimestamp) query = query.gt('created_at', lastChatTimestamp);
-  const { data } = await query.limit(50);
-  if(data && data.length){
-    let added = false;
-    data.forEach(m => {
-      if(!chatSeenIds.has(m.id)){
-        chatSeenIds.add(m.id);
-        chatMessages.push(m);
-        lastChatTimestamp = m.created_at;
-        added = true;
-      }
-    });
-    if(added){ renderChat(); markChatRead(); }
-  }
+    .order('created_at', { ascending: true })
+    .limit(300);
+  if(!data) return;
+  const prevSize = chatMap.size;
+  data.forEach(m => chatMap.set(m.id, m));
+  // Solo re-renderizar si llegó algo nuevo
+  if(chatMap.size !== prevSize) renderChat();
 }
 
 function startChatPolling(){
   stopChatPolling();
-  chatPollingInterval = setInterval(pollNewMessages, 4000);
+  chatPollingInterval = setInterval(pollChat, 4000);
 }
 function stopChatPolling(){
   if(chatPollingInterval){ clearInterval(chatPollingInterval); chatPollingInterval=null; }
-}
-
-function chatReadKey(){ return `ek_chat_read_${currentClientId}`; }
-function markChatRead(){
-  if(!lastChatTimestamp) return;
-  localStorage.setItem(chatReadKey(), lastChatTimestamp);
-  updateChatBadge(0);
-}
-function updateChatBadge(count){
-  const badge = document.getElementById('chat-unread-badge');
-  if(!badge) return;
-  if(count > 0){ badge.textContent = count > 9 ? '9+' : count; badge.style.display = 'block'; }
-  else { badge.style.display = 'none'; }
-}
-async function checkUnreadForClient(clientId){
-  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
-  if(!coachId || !clientId) return;
-  const readTs = localStorage.getItem(`ek_chat_read_${clientId}`);
-  let query = sb.from('client_messages').select('id', {count:'exact',head:true})
-    .eq('client_id', clientId).eq('coach_id', coachId)
-    .neq('sender_id', currentUser.id);
-  if(readTs) query = query.gt('created_at', readTs);
-  const { count } = await query;
-  updateChatBadge(count || 0);
 }
 
 function renderChat(){
@@ -5192,7 +5162,11 @@ function renderChat(){
   const label = document.getElementById('chat-with-label');
   if(label) label.textContent = getChatLabel();
 
-  if(!chatMessages.length){
+  // Ordenar por created_at (el Map puede tener orden de inserción variado con el poll)
+  const msgs = Array.from(chatMap.values())
+    .sort((a,b) => a.created_at.localeCompare(b.created_at));
+
+  if(!msgs.length){
     container.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted2)">
       <div style="font-size:36px">💬</div>
       <div style="font-family:'Syne',sans-serif;font-weight:700">Sin mensajes aún</div>
@@ -5203,7 +5177,7 @@ function renderChat(){
 
   let html = '';
   let lastDate = '';
-  chatMessages.forEach(msg => {
+  msgs.forEach(msg => {
     const dt = new Date(msg.created_at);
     const dateStr = dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
     if(dateStr !== lastDate){
@@ -5212,9 +5186,7 @@ function renderChat(){
     }
     const mine = msg.sender_id === currentUser.id;
     const timeStr = dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-    const senderLabel = msg.sender_role==='coach' ? '👨‍💼 Entrenador' : '🧑 '+( allClients.find(c=>c.id===msg.sender_id)?.full_name || 'Cliente');
     html += `<div style="display:flex;flex-direction:column;align-self:${mine?'flex-end':'flex-start'};max-width:72%">
-      ${!mine&&isCoachView()?`<div class="chat-meta" style="padding-left:4px;margin-bottom:2px">${senderLabel}</div>`:''}
       <div class="chat-bubble ${mine?'mine':'theirs'}">${msg.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
       <div class="chat-meta">${timeStr}</div>
     </div>`;
@@ -5227,27 +5199,29 @@ window.sendChatMessage = async () => {
   const inp = document.getElementById('chat-input');
   const text = inp?.value?.trim();
   if(!text || !currentClientId) return;
-  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+  const coachId = getChatCoachId();
   if(!coachId) return;
   inp.value = '';
   inp.focus();
-  const msg = {
+  const { data, error } = await sb.from('client_messages').insert({
     client_id: currentClientId,
     coach_id: coachId,
     sender_id: currentUser.id,
     sender_role: currentProfile.role,
     message: text
-  };
-  const { data, error } = await sb.from('client_messages').insert(msg).select().single();
-  if(error){ toast('Error enviando mensaje: '+error.message); inp.value=text; return; }
-  // Añadir solo si no lo tenemos ya (evitar duplicados con el poll)
-  if(!chatSeenIds.has(data.id)){
-    chatSeenIds.add(data.id);
-    chatMessages.push(data);
-    lastChatTimestamp = data.created_at;
-  }
+  }).select().single();
+  if(error){ toast('Error: '+error.message); inp.value=text; return; }
+  chatMap.set(data.id, data);
   renderChat();
 };
+
+function chatReadKey(){ return `ek_chat_read_${currentClientId}`; }
+function updateChatBadge(count){
+  const badge = document.getElementById('chat-unread-badge');
+  if(!badge) return;
+  if(count>0){ badge.textContent=count>9?'9+':count; badge.style.display='block'; }
+  else badge.style.display='none';
+}
 
 // ── BOOT ──
 document.getElementById('gif-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeGifModal(); });
