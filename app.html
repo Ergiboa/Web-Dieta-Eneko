@@ -214,14 +214,14 @@ td select{background:var(--card2);color:var(--text);border:1px solid var(--borde
 .diet-day-head{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:var(--card2);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:5px}
 .diet-day-head h3{font-family:'Syne',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px}
 .diet-day-macros{display:flex;gap:8px;font-size:10px;flex-wrap:wrap}
-.diet-meals-row{display:grid;grid-template-columns:repeat(5,1fr)}
-@media(max-width:900px){.diet-meals-row{grid-template-columns:1fr 1fr}}
-@media(max-width:480px){.diet-meals-row{grid-template-columns:1fr}}
-.diet-meal-col{border-right:1px solid var(--border);padding:8px}
+.diet-meals-row{display:grid;grid-template-columns:repeat(5,minmax(155px,1fr));overflow-x:auto}
+.diet-meal-col{border-right:1px solid var(--border);padding:8px;min-width:155px}
 .diet-meal-col:last-child{border-right:none}
-@media(max-width:480px){.diet-meal-col{border-right:none;border-bottom:1px solid var(--border)}}
-@media(max-width:480px){.diet-meal-col:last-child{border-bottom:none}}
 .meal-col-title{font-family:'Syne',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.meal-note-area{font-size:10px;color:var(--muted2);line-height:1.4;margin-bottom:6px;padding:4px 0}
+.meal-note-inp{width:100%;background:transparent;border:none;border-bottom:1px dashed var(--border);color:var(--muted2);font-size:10px;line-height:1.4;padding:2px 0 3px;resize:none;font-family:inherit;outline:none;min-height:32px}
+.meal-note-inp:focus{border-bottom-color:var(--accent);color:var(--text)}
+.meal-note-inp::placeholder{color:var(--border)}
 .recipe-sel{width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--muted2);padding:3px 6px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:10px;outline:none;cursor:pointer;margin-bottom:5px}
 .recipe-sel:focus{border-color:var(--accent2)}
 .ing-row{display:flex;align-items:center;gap:3px;padding:2px 0;border-bottom:1px dotted var(--card2)}
@@ -346,6 +346,13 @@ td select{background:var(--card2);color:var(--text);border:1px solid var(--borde
 .ex-block{border-bottom:1px solid var(--border)}
 .ex-block:last-of-type{border-bottom:none}
 .ex-block-head{display:flex;align-items:center;gap:8px;padding:10px 16px 5px}
+/* GIF inline en ejercicio */
+.ex-block-inner{display:flex;gap:0;align-items:flex-start}
+.ex-block-gif-side{flex-shrink:0;width:90px;background:#0a0b0a;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border);min-height:80px;cursor:pointer;position:relative}
+.ex-block-gif-side img{width:90px;height:90px;object-fit:cover;display:block}
+.ex-block-gif-side .no-gif{font-size:22px;color:var(--muted);padding:8px}
+.ex-block-gif-side:hover .no-gif{color:var(--accent)}
+@media(max-width:480px){.ex-block-gif-side{width:72px}.ex-block-gif-side img{width:72px;height:72px}}
 .ex-block-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ex-block-name-inp{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;flex:1;background:transparent;border:none;border-bottom:1px dotted var(--border);color:var(--text);outline:none;min-width:0}
 .ex-block-name-inp:focus{border-bottom-color:var(--accent)}
@@ -497,6 +504,13 @@ td select{background:var(--card2);color:var(--text);border:1px solid var(--borde
 /* ── NOTES ── */
 .notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:600px){.notes-grid{grid-template-columns:1fr}}
+/* Chat */
+.chat-bubble{max-width:72%;padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;position:relative}
+.chat-bubble.mine{background:var(--accent);color:#08090a;border-bottom-right-radius:4px;align-self:flex-end}
+.chat-bubble.theirs{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;align-self:flex-start}
+.chat-meta{font-size:9px;color:var(--muted2);margin-top:3px;font-family:'Syne',sans-serif;font-weight:600}
+.chat-bubble.mine .chat-meta{text-align:right;color:rgba(8,9,10,.55)}
+.chat-day-sep{text-align:center;font-size:9px;color:var(--muted2);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:6px 0;flex-shrink:0}
 .note-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:13px}
 .note-card h4{font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--accent3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
 .note-card ul{list-style:none}
@@ -775,6 +789,9 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
     <div class="nav-group-lbl">Logística</div>
     <div class="nav-item" data-tab="compra" onclick="navItemClick(this,event)"><span class="nav-icon">🛒</span>Compra</div>
     <div class="nav-item" data-tab="stock" onclick="navItemClick(this,event)"><span class="nav-icon">📦</span>Stock</div>
+
+    <!-- Chat -->
+    <div class="nav-item" data-tab="chat" onclick="navItemClick(this,event)"><span class="nav-icon">💬</span>Chat</div>
 
     <!-- Perfil (includes Progreso) -->
     <div class="nav-sep" style="margin:8px 8px 5px"></div>
@@ -1152,39 +1169,82 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
   </div>
 
   <div id="panel-notas" class="panel">
-    <div class="sec">Notas y comunicación</div>
-    <div class="notes-grid">
-      <div class="note-card"><h4>💧 Reglas rápidas</h4><ul>
-        <li>Agua 1,5–2 L/día mínimo</li><li>Suplementos según dieta</li>
-        <li>Horarios: consistencia &gt; perfección</li><li>Creatina post-entreno</li>
-      </ul></div>
-      <div class="note-card"><h4>🏋 Suplementos</h4><ul>
-        <li>2 Scoops proteína/día</li><li>Creatina con comida post-entreno</li>
-      </ul></div>
-      <div class="note-card" style="grid-column:span 2">
-        <h4>📝 Notas personales</h4>
-        <textarea id="personal-notes" placeholder="Añade tus notas..." oninput="saveNotes()"></textarea>
-        <button class="btn ghost sm" style="margin-top:7px" onclick="saveNotesToServer()">💾 Guardar</button>
-      </div>
-      <div class="feedback-card coach-feedback-area" style="grid-column:span 2;display:none">
-        <h4 style="font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--accent3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">👨‍💼 Feedback al cliente</h4>
-        <textarea id="coach-feedback-inp" placeholder="Escribe feedback para este cliente..." style="min-height:100px;border:1px solid rgba(242,210,79,.15);border-radius:6px;padding:9px;background:rgba(242,210,79,.02)"></textarea>
-        <button class="btn gold sm" style="margin-top:8px" onclick="saveCoachFeedback()">📤 Publicar al cliente</button>
-      </div>
-      <div class="feedback-published client-feedback-area" style="grid-column:span 2;display:none">
-        <h4 style="font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--accent2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">📨 Mensaje de tu entrenador</h4>
-        <div id="published-feedback-text" style="font-size:12px;line-height:1.7;color:var(--muted2)">—</div>
-      </div>
-      <div class="note-card client-feedback-area" style="grid-column:span 2;display:none">
-        <h4>🔑 Cambiar contraseña</h4>
-        <p style="font-size:11px;color:var(--muted2);margin:0 0 10px">Cambia tu contraseña de acceso a la app.</p>
-        <button class="btn ghost sm" onclick="openChangePassModal()">🔑 Cambiar contraseña</button>
-      </div>
-    </div>
+    <div id="notas-content"></div>
   </div>
 
   <!-- ══ MI PERFIL (includes Progreso) ══ -->
   <div id="panel-perfil" class="panel">
+    <!-- Perfil completo del cliente (solo visible para coach cuando ve un cliente) -->
+    <div id="client-profile-card" style="display:none;margin-bottom:18px;max-width:1100px">
+      <div class="sec" style="margin-bottom:12px">👤 PERFIL DEL CLIENTE — <span id="client-profile-name" style="color:var(--accent2)">—</span></div>
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start">
+        <!-- LEFT: datos del cliente -->
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:18px">
+            <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px">
+              <div id="client-profile-avatar" style="width:64px;height:64px;border-radius:12px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#08090a;flex-shrink:0">?</div>
+              <div>
+                <div id="client-profile-fullname" style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px">—</div>
+                <div id="client-profile-email" style="font-size:11px;color:var(--muted2);margin-top:2px">—</div>
+              </div>
+            </div>
+            <div style="height:1px;background:var(--border);margin-bottom:12px"></div>
+            <div style="font-size:9px;color:var(--muted2);font-family:'Syne',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📝 Notas del cliente</div>
+            <div id="client-personal-notes-view" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px;font-size:11px;color:var(--muted2);line-height:1.6;min-height:50px;white-space:pre-wrap">Sin notas.</div>
+            <div style="height:1px;background:var(--border);margin:12px 0"></div>
+            <div style="font-size:9px;color:var(--muted2);font-family:'Syne',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📤 Feedback publicado</div>
+            <div id="client-coach-feedback-view" style="background:rgba(242,210,79,.04);border:1px solid rgba(242,210,79,.15);border-radius:6px;padding:9px;font-size:11px;color:var(--muted2);line-height:1.6;min-height:40px;white-space:pre-wrap">Sin feedback.</div>
+          </div>
+          <!-- Peso del cliente -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:18px">
+            <div class="sec" style="margin-bottom:10px">⚖️ PESO DEL CLIENTE</div>
+            <div id="client-weight-chart" style="display:flex;align-items:flex-end;gap:2px;height:70px;background:var(--bg2);border-radius:6px;padding:6px;overflow-x:auto;margin-bottom:8px">
+              <div style="color:var(--muted2);font-size:10px;text-align:center;width:100%;padding:6px">Sin registros</div>
+            </div>
+            <div id="client-weight-list" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:3px"></div>
+          </div>
+        </div>
+        <!-- RIGHT: progreso del cliente (usa los mismos charts) -->
+        <div>
+          <div class="sec" style="margin-bottom:12px">📈 PROGRESO Y MEDIDAS DEL CLIENTE</div>
+          <div class="prog-layout">
+            <div class="prog-stats-row" id="prg-stats-row" style="grid-column:1/-1">
+              <div class="prog-stat"><div class="ps-lbl">Peso actual</div><div class="ps-val" id="ps-weight">—</div><div class="ps-sub" id="ps-weight-sub">—</div></div>
+              <div class="prog-stat"><div class="ps-lbl">% Grasa</div><div class="ps-val" id="ps-fat">—</div><div class="ps-sub" id="ps-fat-sub">—</div></div>
+              <div class="prog-stat"><div class="ps-lbl">Cintura</div><div class="ps-val" id="ps-waist">—</div><div class="ps-sub" id="ps-waist-sub">—</div></div>
+              <div class="prog-stat"><div class="ps-lbl">Registros</div><div class="ps-val" id="ps-count">0</div><div class="ps-sub" id="ps-count-sub">—</div></div>
+            </div>
+            <div class="analysis-card" id="prg-analysis" style="display:none;grid-column:1/-1">
+              <h4>🔬 Análisis de composición corporal</h4>
+              <div class="analysis-status" id="prg-analysis-status"></div>
+              <div class="analysis-bars" id="prg-analysis-bars"></div>
+            </div>
+            <div class="chart-wrap" style="grid-column:1/-1">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:7px">
+                <div class="chart-tabs" id="chart-tabs">
+                  <button class="chart-tab active" onclick="switchChartTab('weight',this)">Peso</button>
+                  <button class="chart-tab" onclick="switchChartTab('fat',this)">% Grasa</button>
+                  <button class="chart-tab" onclick="switchChartTab('waist',this)">Cintura</button>
+                  <button class="chart-tab" onclick="switchChartTab('measures',this)">Medidas</button>
+                </div>
+              </div>
+              <div id="prg-chart-area" style="min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px">
+                Añade registros para ver la gráfica
+              </div>
+            </div>
+            <div style="grid-column:1/-1">
+              <div class="sec">Historial de registros</div>
+              <div class="table-scroll">
+                <table class="hist-table">
+                  <thead><tr><th>Fecha</th><th>Peso</th><th>Δ Peso</th><th>% Grasa</th><th>Cintura</th><th>Pecho</th><th>Brazo</th><th>Muslo</th><th>Notas</th></tr></thead>
+                  <tbody id="prg-history-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start;max-width:1100px">
 
       <!-- LEFT: avatar + account settings -->
@@ -1435,6 +1495,21 @@ textarea{width:100%;background:transparent;border:none;color:var(--text);font-fa
     </div>
   </div>
 
+  <!-- ══ CHAT ══ -->
+  <div id="panel-chat" class="panel">
+    <div id="chat-wrap" style="display:flex;flex-direction:column;height:calc(100vh - 120px);max-width:700px">
+      <div class="sec" style="margin-bottom:12px;flex-shrink:0">💬 CHAT — <span id="chat-with-label" style="color:var(--accent2)">—</span></div>
+      <div id="chat-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0 12px;scroll-behavior:smooth"></div>
+      <div style="flex-shrink:0;display:flex;gap:8px;padding-top:10px;border-top:1px solid var(--border)">
+        <textarea id="chat-input" placeholder="Escribe un mensaje…" rows="2"
+          style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;resize:none;outline:none;line-height:1.5;transition:border-color .15s"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+        <button class="btn" onclick="sendChatMessage()" style="align-self:flex-end;padding:10px 18px">📤 Enviar</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /app-main -->
 
 <script type="module">
@@ -1463,6 +1538,7 @@ let currentClientId = null;
 let allClients     = [];
 
 let DIET     = {};
+let MEAL_NOTES = {}; // {desayuno:'',comida:'', ...} notas del coach por tipo de comida, por cliente
 function getDefaultDB(){return {avena:{base:'100g',kcal:389,prot:17,carb:66,fat:7,fib:10},'scoop proteina':{base:'1ud',kcal:120,prot:25,carb:3,fat:2,fib:0},patata:{base:'100g',kcal:77,prot:2,carb:17,fat:0.1,fib:2.2},'queso fresco batido':{base:'100g',kcal:72,prot:8,carb:3,fat:3,fib:0},'leche de soja':{base:'100ml',kcal:33,prot:3.3,carb:1.2,fat:1.8,fib:0.4},'crema de arroz':{base:'100g',kcal:360,prot:7,carb:79,fat:1,fib:1},merluza:{base:'100g',kcal:82,prot:18,carb:0,fat:1,fib:0},'arandanos congelados':{base:'100g',kcal:57,prot:0.7,carb:14,fat:0.3,fib:2.4},'platano pequeno':{base:'1ud',kcal:89,prot:1.1,carb:23,fat:0.3,fib:2.6},'esparragos trigueros':{base:'100g',kcal:20,prot:2.2,carb:3.9,fat:0.1,fib:2.1},'frambuesas congeladas':{base:'100g',kcal:52,prot:1.2,carb:12,fat:0.7,fib:6.5},'yogur natural entero':{base:'1ud',kcal:90,prot:5,carb:6,fat:5,fib:0},kiwi:{base:'1ud',kcal:61,prot:1.1,carb:15,fat:0.5,fib:3},'huevo entero':{base:'1ud',kcal:70,prot:6,carb:0.4,fat:4.8,fib:0},almendras:{base:'100g',kcal:579,prot:21,carb:22,fat:50,fib:12.5},fresas:{base:'100g',kcal:32,prot:0.7,carb:7.7,fat:0.3,fib:2},pechuga:{base:'100g',kcal:165,prot:31,carb:0,fat:3.6,fib:0},'queso cottage light':{base:'100g',kcal:72,prot:12,carb:3,fat:1,fib:0},tomate:{base:'100g',kcal:18,prot:0.9,carb:3.9,fat:0.2,fib:1.2},mandarina:{base:'1ud',kcal:40,prot:0.8,carb:10,fat:0.3,fib:1.5},'arroz integral':{base:'100g',kcal:355,prot:7.5,carb:74,fat:2.7,fib:3.5},'atun tarro cristal':{base:'100g',kcal:116,prot:26,carb:0,fat:1,fib:0},lechuga:{base:'1ud',kcal:15,prot:1.4,carb:2.9,fat:0.2,fib:1.3},'carne de conejo':{base:'100g',kcal:136,prot:20,carb:0,fat:6,fib:0},'pimiento tricolor congelado':{base:'100g',kcal:27,prot:1,carb:6.3,fat:0.2,fib:2},'pan integral':{base:'1ud',kcal:80,prot:3,carb:15,fat:1,fib:2},'masa pizza integral':{base:'1ud',kcal:300,prot:9,carb:58,fat:3,fib:4},lentejas:{base:'100g',kcal:116,prot:9,carb:20,fat:0.4,fib:8},'tomate frito':{base:'100g',kcal:80,prot:1.5,carb:12,fat:3,fib:1.5},espelta:{base:'100g',kcal:338,prot:14.5,carb:65,fat:2.4,fib:11},brocoli:{base:'100g',kcal:34,prot:2.8,carb:7,fat:0.4,fib:2.6},'tiras de pollo':{base:'100g',kcal:165,prot:31,carb:0,fat:3.6,fib:0},mozarella:{base:'100g',kcal:280,prot:22,carb:2,fat:22,fib:0},'filete ternera':{base:'100g',kcal:179,prot:26,carb:0,fat:8,fib:0}};}
 function getDefaultPrices(){return {almendras:{merc:3.29,lidl:2.99,carrefour:3.49,dia:3.09,eroski:3.35,base:'200g'},'arandanos congelados':{merc:2.99,lidl:2.49,carrefour:3.19,dia:2.59,eroski:2.99,base:'300g'},'arroz integral':{merc:1.59,lidl:1.29,carrefour:1.79,dia:1.39,eroski:1.59,base:'1kg'},'atun tarro cristal':{merc:1.89,lidl:1.69,carrefour:1.99,dia:1.75,eroski:1.89,base:'160g'},avena:{merc:1.99,lidl:1.39,carrefour:2.09,dia:1.49,eroski:1.89,base:'500g'},brocoli:{merc:0.99,lidl:0.89,carrefour:1.09,dia:0.89,eroski:0.99,base:'ud'},'carne de conejo':{merc:6.99,lidl:5.99,carrefour:7.49,dia:6.49,eroski:7.09,base:'kg'},'crema de arroz':{merc:3.49,lidl:3.29,carrefour:3.69,dia:3.35,eroski:3.49,base:'500g'},'esparragos trigueros':{merc:1.29,lidl:1.09,carrefour:1.39,dia:1.15,eroski:1.29,base:'300g'},espelta:{merc:2.49,lidl:1.99,carrefour:2.69,dia:2.09,eroski:2.45,base:'500g'},'filete ternera':{merc:9.99,lidl:8.99,carrefour:10.99,dia:9.49,eroski:10.29,base:'kg'},'frambuesas congeladas':{merc:2.79,lidl:2.39,carrefour:2.99,dia:2.49,eroski:2.79,base:'300g'},fresas:{merc:1.99,lidl:1.69,carrefour:2.09,dia:1.79,eroski:1.99,base:'500g'},'huevo entero':{merc:1.89,lidl:1.59,carrefour:1.99,dia:1.65,eroski:1.85,base:'6ud'},kiwi:{merc:1.49,lidl:1.29,carrefour:1.59,dia:1.35,eroski:1.49,base:'4ud'},'leche de soja':{merc:1.29,lidl:0.99,carrefour:1.39,dia:1.09,eroski:1.25,base:'1L'},lechuga:{merc:0.89,lidl:0.79,carrefour:0.99,dia:0.79,eroski:0.89,base:'ud'},lentejas:{merc:0.99,lidl:0.79,carrefour:1.09,dia:0.85,eroski:0.99,base:'500g'},mandarina:{merc:1.49,lidl:1.29,carrefour:1.59,dia:1.35,eroski:1.49,base:'malla'},'masa pizza integral':{merc:1.99,lidl:1.79,carrefour:2.19,dia:1.89,eroski:1.99,base:'ud'},merluza:{merc:7.99,lidl:6.99,carrefour:8.49,dia:7.49,eroski:7.99,base:'kg'},mozarella:{merc:1.39,lidl:1.19,carrefour:1.49,dia:1.25,eroski:1.39,base:'125g'},'pan integral':{merc:1.79,lidl:1.39,carrefour:1.89,dia:1.49,eroski:1.75,base:'ud'},patata:{merc:1.19,lidl:0.99,carrefour:1.29,dia:1.05,eroski:1.19,base:'kg'},pechuga:{merc:5.99,lidl:5.29,carrefour:6.49,dia:5.49,eroski:5.99,base:'kg'},'pimiento tricolor congelado':{merc:2.49,lidl:1.99,carrefour:2.69,dia:2.09,eroski:2.49,base:'400g'},'platano pequeno':{merc:1.29,lidl:1.09,carrefour:1.39,dia:1.15,eroski:1.29,base:'kg'},'queso cottage light':{merc:1.89,lidl:1.69,carrefour:1.99,dia:1.75,eroski:1.89,base:'250g'},'queso fresco batido':{merc:1.59,lidl:1.39,carrefour:1.69,dia:1.45,eroski:1.55,base:'500g'},'scoop proteina':{merc:39.99,lidl:null,carrefour:42.99,dia:null,eroski:null,base:'kg'},'tiras de pollo':{merc:4.99,lidl:4.49,carrefour:5.49,dia:4.69,eroski:4.99,base:'kg'},tomate:{merc:0.99,lidl:0.89,carrefour:1.09,dia:0.89,eroski:0.99,base:'kg'},'tomate frito':{merc:0.89,lidl:0.75,carrefour:0.95,dia:0.79,eroski:0.89,base:'350g'},'yogur natural entero':{merc:0.45,lidl:0.39,carrefour:0.49,dia:0.41,eroski:0.45,base:'ud'}};}
 let DB       = getDefaultDB();
@@ -1537,6 +1613,10 @@ let EX_LIBRARY = [];
 let personalNotes = '';
 let coachFeedback = '';
 let publishedFeedback = '';
+// Notas estructuradas del coach por cliente: {quickRules:'', supplements:'', personal:''}
+const DEFAULT_QUICK_RULES = '• Agua 1,5–2 L/día mínimo\n• Suplementos según dieta\n• Horarios: consistencia > perfección\n• Creatina post-entreno';
+const DEFAULT_SUPPLEMENTS = '• 2 Scoops proteína/día\n• Creatina con comida post-entreno';
+let coachClientNotes = { quickRules: DEFAULT_QUICK_RULES, supplements: DEFAULT_SUPPLEMENTS, personal: '' };
 
 const THIS_WEEK = weekKey();
 let currentSuperTab = 'all';
@@ -1703,7 +1783,6 @@ async function boot() {
       document.getElementById('diet-locked-notice').style.display = 'flex';
       document.getElementById('diet-edit-btns').style.display = 'none';
       document.getElementById('new-routine-btn').style.display = 'none';
-      document.querySelector('.client-feedback-area').style.display = 'block';
       loadPublishedFeedback();
       // Auto-select today for client
       const todayLabel = getTodayLabel();
@@ -1818,6 +1897,11 @@ async function loadClientData(clientId) {
   ]);
 
   DIET     = dietRes.data?.diet_json || getDefaultDiet();
+  // Extraer notas de comida si están guardadas dentro del diet_json
+  if (DIET._mealNotes) { MEAL_NOTES = DIET._mealNotes; delete DIET._mealNotes; }
+  else { MEAL_NOTES = {}; }
+  // Normalizar: asegurar que todos los días tengan todas las comidas
+  Object.keys(DIET).forEach(day=>{MEALS_ORDER.forEach(m=>{if(!DIET[day][m])DIET[day][m]=[];});});
   ROUTINES = (routinesRes.data||[]).map(r => ({...r, exercises: r.exercises || [], muscles: r.muscles || []}));
   console.log('[DEBUG] Routines loaded from DB:', ROUTINES.length, 'role:', currentProfile.role);
   // Parse schedule — may contain embedded snapshots: {LUN: {rid, snapshot}, ...} or legacy strings
@@ -1841,6 +1925,21 @@ async function loadClientData(clientId) {
   STOCK    = stockRes.data?.stock_json || {};
   personalNotes   = notesRes.data?.personal_notes || '';
   coachFeedback   = notesRes.data?.coach_feedback  || '';
+  publishedFeedback = notesRes.data?.coach_feedback || '';
+  // Parsear notas estructuradas del coach (guardadas como JSON en personal_notes cuando es el coach)
+  if (isCoachView()) {
+    try {
+      const parsed = JSON.parse(personalNotes);
+      if (parsed && typeof parsed === 'object' && ('quickRules' in parsed || 'supplements' in parsed || 'personal' in parsed)) {
+        coachClientNotes = {
+          quickRules: parsed.quickRules || DEFAULT_QUICK_RULES,
+          supplements: parsed.supplements || DEFAULT_SUPPLEMENTS,
+          personal: parsed.personal||''
+        };
+        personalNotes = coachClientNotes.personal;
+      } else { coachClientNotes = { quickRules: DEFAULT_QUICK_RULES, supplements: DEFAULT_SUPPLEMENTS, personal: personalNotes }; }
+    } catch(e) { coachClientNotes = { quickRules: DEFAULT_QUICK_RULES, supplements: DEFAULT_SUPPLEMENTS, personal: personalNotes }; }
+  }
   publishedFeedback = notesRes.data?.coach_feedback || '';
 
   TRN_LOG = {};
@@ -1899,6 +1998,7 @@ async function loadClientData(clientId) {
 
 async function switchClient(clientId) {
   if (!clientId) return;
+  stopChatPolling();
   currentClientId = clientId;
   CHECKED = {}; // reset lista compra al cambiar cliente
   await loadClientData(clientId);
@@ -1917,6 +2017,12 @@ async function switchClient(clientId) {
   renderCompra();
   loadProgressFromServer().then(()=>renderProgress());
   renderVitamins();
+  renderNotasPanel();
+  // Restart chat if panel is open
+  const chatPanel = document.getElementById('panel-chat');
+  if(chatPanel?.classList.contains('active')){
+    chatMessages=[]; loadChat().then(()=>startChatPolling());
+  }
   toast('✓ ' + (isSelf ? 'Viendo tus datos' : selectedText));
 }
 
@@ -1940,9 +2046,10 @@ async function loadExLibrary() {
 
 async function loadPublishedFeedback() {
   const { data } = await sb.from('client_notes').select('coach_feedback').eq('client_id', currentUser.id).maybeSingle();
-  const txt = data?.coach_feedback || '';
+  publishedFeedback = data?.coach_feedback || '';
+  coachFeedback = publishedFeedback;
   const el = document.getElementById('published-feedback-text');
-  if (el) el.textContent = txt || 'Tu entrenador aún no ha dejado ningún mensaje.';
+  if (el) el.textContent = publishedFeedback || 'Tu entrenador aún no ha dejado ningún mensaje.';
 }
 
 // ══════════════════════════════════════════════════════
@@ -1959,9 +2066,10 @@ function flash() {
 async function saveDietToServer() {
   if (!currentClientId) return;
   const coachId = currentProfile.role === 'coach' ? currentUser.id : currentProfile.coach_id;
+  const dietWithNotes = { ...DIET, _mealNotes: MEAL_NOTES };
   await sb.from('client_diets').upsert({
     client_id: currentClientId, coach_id: coachId,
-    diet_json: DIET, updated_by: currentUser.id, updated_at: new Date().toISOString()
+    diet_json: dietWithNotes, updated_by: currentUser.id, updated_at: new Date().toISOString()
   }, { onConflict: 'client_id' });
   flash(); toast('Dieta guardada ✓');
 }
@@ -2038,9 +2146,13 @@ async function saveStockToServer() {
 
 async function saveNotesToServer() {
   if (!currentClientId) return;
+  let notesToSave = personalNotes;
+  if (isCoachView()) {
+    notesToSave = JSON.stringify(coachClientNotes);
+  }
   await sb.from('client_notes').upsert({
     client_id: currentClientId,
-    personal_notes: personalNotes,
+    personal_notes: notesToSave,
     updated_at: new Date().toISOString()
   }, { onConflict: 'client_id' });
   flash(); toast('Notas guardadas ✓');
@@ -2049,10 +2161,14 @@ async function saveNotesToServer() {
 async function saveCoachFeedback() {
   if (!currentClientId || currentProfile.role !== 'coach') return;
   const txt = document.getElementById('coach-feedback-inp')?.value || '';
+  coachFeedback = txt;
   await sb.from('client_notes').upsert({
     client_id: currentClientId, coach_feedback: txt,
     updated_at: new Date().toISOString()
   }, { onConflict: 'client_id' });
+  // Actualizar vista del perfil si está abierta
+  const cf = document.getElementById('client-coach-feedback-view');
+  if(cf) cf.textContent = txt || 'Sin feedback publicado.';
   flash(); toast('Feedback publicado al cliente 📤');
 }
 
@@ -2131,7 +2247,14 @@ function topSources(vit,n=3){
 //  RENDER: RESUMEN
 // ══════════════════════════════════════════════════════
 function renderResumen(){
-  const days=Object.keys(DIET);let sk=0,sp=0,sc=0,sf=0,sfib=0,rows='';
+  // Ordenar días lunes→domingo
+  const _DORD=['LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO','DOMINGO','LUN','MAR','MIE','JUE','VIE','SAB','DOM'];
+  const _norm=s=>s.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const days=Object.keys(DIET).sort((a,b)=>{
+    const ia=_DORD.indexOf(_norm(a)),ib=_DORD.indexOf(_norm(b));
+    return (ia===-1?99:ia)-(ib===-1?99:ib);
+  });
+  let sk=0,sp=0,sc=0,sf=0,sfib=0,rows='';
   days.forEach(d=>{const m=dayMac(DIET[d]);sk+=+m.kcal;sp+=+m.prot;sc+=+m.carb;sf+=+m.fat;sfib+=+m.fib;
     rows+=`<tr><td style="font-family:'Syne',sans-serif;font-weight:700;font-size:11px">${d}</td><td style="color:var(--accent3)">${m.kcal}</td><td style="color:var(--accent)">${m.prot}</td><td style="color:var(--accent2)">${m.carb}</td><td style="color:var(--orange)">${m.fat}</td><td style="color:var(--purple)">${m.fib}</td></tr>`;});
   const n=days.length||1;
@@ -2212,8 +2335,17 @@ function makeIngNameInput(day, meal, idx, val, locked) {
 
 function renderDiet(){
   const locked = !isCoachView();
+  // Normalizar claves de comida en cada día (por si el JSON de Supabase viene sin preCama)
+  Object.keys(DIET).forEach(day=>{ MEALS_ORDER.forEach(m=>{ if(!Array.isArray(DIET[day][m])) DIET[day][m]=[]; }); });
   let html='';
-  Object.entries(DIET).forEach(([day,dayObj])=>{
+  const DIET_DAY_ORDER = ['LUNES','MARTES','MIERCOLES','MIÉRCOLES','JUEVES','VIERNES','SABADO','SÁBADO','DOMINGO',
+    'LUN','MAR','MIE','MIÉ','JUE','VIE','SAB','SÁB','DOM'];
+  const sortedEntries = Object.entries(DIET).sort(([a],[b])=>{
+    const ia = DIET_DAY_ORDER.findIndex(d=>d===a.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+    const ib = DIET_DAY_ORDER.findIndex(d=>d===b.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+    return (ia===-1?99:ia) - (ib===-1?99:ib);
+  });
+  sortedEntries.forEach(([day,dayObj])=>{
     const m=dayMac(dayObj);
     let mcols='';
     MEALS_ORDER.forEach(meal=>{
@@ -2225,8 +2357,13 @@ function renderDiet(){
           ${makeIngNameInput(day, meal, idx, ing.p, locked)}
           ${locked?'':`<button class="ing-del" onclick="delIng('${day}','${meal}',${idx})">×</button>`}
         </div>`).join('');
+      const noteVal = (MEAL_NOTES[meal] || '').replace(/</g,'&lt;');
+      const noteHtml = locked
+        ? (noteVal ? `<div class="meal-note-area">${noteVal.replace(/\n/g,'<br>')}</div>` : '')
+        : `<textarea class="meal-note-inp" rows="2" placeholder="Nota para ${MEAL_LABELS[meal]||meal}…" oninput="updMealNote('${meal}',this.value)">${noteVal}</textarea>`;
       mcols+=`<div class="diet-meal-col">
         <div class="meal-col-title">${MEAL_LABELS[meal]||meal}</div>
+        ${noteHtml}
         ${locked?'':`<select class="recipe-sel" onchange="applyRecipe('${day}','${meal}',this.value);this.value=''">${recipeOptions()}</select>`}
         <div id="di-${day}-${meal}">${ings}</div>
         ${locked?'':`<button class="add-ing-btn" onclick="addIng('${day}','${meal}')">+ ingrediente</button>`}
@@ -2245,6 +2382,7 @@ function renderDiet(){
 }
 
 window.updIng=(day,meal,idx,f,v)=>{if(!isCoachView())return;if(!DIET[day]||!DIET[day][meal])return;DIET[day][meal][idx][f]=v;refreshDayMacros(day);renderResumen();};
+window.updMealNote=(meal,val)=>{if(!isCoachView())return;MEAL_NOTES[meal]=val;};
 function refreshDayMacros(day){const m=dayMac(DIET[day]);document.querySelectorAll('.diet-day-card').forEach(c=>{const h=c.querySelector('.diet-day-head h3');if(h&&h.textContent===day){const md=c.querySelector('.diet-day-macros');if(md)md.innerHTML=`<span style="color:var(--accent3)">${m.kcal} kcal</span><span style="color:var(--accent)">${m.prot}g P</span><span style="color:var(--accent2)">${m.carb}g C</span><span style="color:var(--orange)">${m.fat}g G</span>`;}})}
 
 window.addIng=(day,meal)=>{
@@ -2269,7 +2407,7 @@ window.delIng=(day,meal,idx)=>{if(!isCoachView())return;DIET[day][meal].splice(i
 window.applyRecipe=(day,meal,rid)=>{if(!rid||!isCoachView())return;const r=RECIPES.find(x=>x.id===rid);if(!r)return;DIET[day][meal]=r.items.map(i=>({...i}));renderDiet();renderResumen();toast(`✓ "${r.name}" aplicada`);};
 window.addDietDay=()=>{if(!isCoachView())return;const n=prompt('Nombre del día:');if(!n)return;const k=n.trim().toUpperCase();if(DIET[k]){alert('Ya existe');return;}DIET[k]={desayuno:[],comida:[],preEntreno:[],cena:[],preCama:[]};renderDiet();};
 window.removeDay=(day)=>{if(!isCoachView())return;if(!confirm(`¿Eliminar ${day}?`))return;delete DIET[day];renderDiet();renderResumen();};
-window.resetDietToDefault=()=>{if(!isCoachView())return;if(!confirm('¿Restaurar?'))return;DIET=getDefaultDiet();renderDiet();renderResumen();toast('Dieta restaurada ✓');};
+window.resetDietToDefault=()=>{if(!isCoachView())return;if(!confirm('¿Restaurar?'))return;DIET=getDefaultDiet();MEAL_NOTES={};renderDiet();renderResumen();toast('Dieta restaurada ✓');};
 window.saveDietToServer=saveDietToServer;
 
 // ══════════════════════════════════════════════════════
@@ -3061,22 +3199,35 @@ function renderExBlock(day,ex,ei,log,coach){
     ?(coach?`<input class="ex-note-inp" type="text" value="${(ex.note||'').replace(/"/g,'&quot;')}" placeholder="Nota..." onchange="updateExNote('${ex.id}',${ei},'${currentRtnId||SCHEDULE[day]||''}',this.value)">`
           :`<div class="ex-note">${ex.note}</div>`)
     :(coach?`<input class="ex-note-inp" type="text" value="" placeholder="Nota técnica..." onchange="updateExNote('${ex.id}',${ei},'${currentRtnId||SCHEDULE[day]||''}',this.value)">`:'');
+  const libEx=EX_LIBRARY.find(e=>e.name&&ex.name&&e.name.toLowerCase()===ex.name.toLowerCase())||
+              EX_LIBRARY.find(e=>e.name&&ex.name&&ex.name.toLowerCase().includes(e.name.toLowerCase().split(' ')[0]));
+  const gifSide=libEx?.gif_url
+    ?`<div class="ex-block-gif-side" onclick="openGifModal('${(ex.name||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')" title="Ver GIF">
+        <img src="${libEx.gif_url}" alt="${ex.name}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'no-gif\\'>🏋️</span>'">
+      </div>`
+    :`<div class="ex-block-gif-side" onclick="openGifModal('${(ex.name||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')" title="Sin GIF">
+        <span class="no-gif">🏋️</span>
+      </div>`;
   return`<div class="ex-block" id="exb-${day}-${ex.id}">
-    <div class="ex-block-head">
-      ${coach
-        ?`<input class="ex-block-name-inp" type="text" value="${(ex.name||'').replace(/"/g,'&quot;')}" placeholder="Nombre del ejercicio" onchange="updateExName('${ex.id}',${ei},'${currentRtnId||SCHEDULE[day]||''}',this.value)">`
-        :`<span class="ex-block-name">${ex.name||'Ejercicio'}</span>`
-      }
-      <button class="gif-btn" onclick="openGifModal('${(ex.name||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')">🎬</button>
-      ${coach?`<button class="set-del-btn" onclick="delExFromWorkout('${day}','${ex.id}')" title="Eliminar ejercicio">🗑</button>`:''}
+    <div class="ex-block-inner">
+      ${gifSide}
+      <div style="flex:1;min-width:0">
+        <div class="ex-block-head">
+          ${coach
+            ?`<input class="ex-block-name-inp" type="text" value="${(ex.name||'').replace(/"/g,'&quot;')}" placeholder="Nombre del ejercicio" onchange="updateExName('${ex.id}',${ei},'${currentRtnId||SCHEDULE[day]||''}',this.value)">`
+            :`<span class="ex-block-name">${ex.name||'Ejercicio'}</span>`
+          }
+          ${coach?`<button class="set-del-btn" onclick="delExFromWorkout('${day}','${ex.id}')" title="Eliminar ejercicio">🗑</button>`:''}
+        </div>
+        ${noteHtml}
+        <div class="sets-table" style="margin:0 16px 6px">
+          <div class="sets-hdr"><span>#</span><span>Peso kg</span><span>Reps</span><span>Tiempo</span><span>✓</span>${coach?'<span></span>':''}</div>
+          <div id="sets-${day}-${ex.id}">${setsHtml}</div>
+        </div>
+        <div class="rpe-row"><span class="rpe-lbl">RPE</span>${rpeBtns}</div>
+        ${coach?`<button class="add-set-btn" onclick="addSetToWorkout('${day}','${ex.id}')">+ Serie</button>`:''}
+      </div>
     </div>
-    ${noteHtml}
-    <div class="sets-table">
-      <div class="sets-hdr"><span>#</span><span>Peso kg</span><span>Reps</span><span>Tiempo</span><span>✓</span>${coach?'<span></span>':''}</div>
-      <div id="sets-${day}-${ex.id}">${setsHtml}</div>
-    </div>
-    <div class="rpe-row"><span class="rpe-lbl">RPE</span>${rpeBtns}</div>
-    ${coach?`<button class="add-set-btn" onclick="addSetToWorkout('${day}','${ex.id}')">+ Serie</button>`:''}
   </div>`;
 }
 
@@ -3110,18 +3261,32 @@ function renderRtnExBlock(rid,ex,ei){
     <span></span>
     <button class="set-del-btn" onclick="delTmplSet('${rid}',${ei},${si})">×</button>
   </div>`).join('');
+  const libEx2=EX_LIBRARY.find(e=>e.name&&ex.name&&e.name.toLowerCase()===ex.name.toLowerCase())||
+               EX_LIBRARY.find(e=>e.name&&ex.name&&ex.name.toLowerCase().includes(e.name.toLowerCase().split(' ')[0]));
+  const gifSide2=libEx2?.gif_url
+    ?`<div class="ex-block-gif-side" onclick="openGifModal('${(ex.name||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')" title="Ver GIF">
+        <img src="${libEx2.gif_url}" alt="${ex.name}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'no-gif\\'>🏋️</span>'">
+      </div>`
+    :`<div class="ex-block-gif-side" onclick="openGifModal('${(ex.name||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')" title="Sin GIF">
+        <span class="no-gif">🏋️</span>
+      </div>`;
   return`<div class="ex-block" id="rtne-${rid}-${ex.id}">
-    <div class="ex-block-head">
-      <input class="ex-block-name-inp" type="text" value="${(ex.name||'').replace(/"/g,'&quot;')}" placeholder="Nombre" onchange="updateRtnExName('${rid}',${ei},this.value)">
-      <button class="gif-btn" onclick="openGifModal('${(ex.name||'').replace(/'/g,'&#39;')}')">🎬</button>
-      <button class="set-del-btn" onclick="delRtnEx('${rid}','${ex.id}')">🗑</button>
+    <div class="ex-block-inner">
+      ${gifSide2}
+      <div style="flex:1;min-width:0">
+        <div class="ex-block-head">
+          <input class="ex-block-name-inp" type="text" value="${(ex.name||'').replace(/"/g,'&quot;')}" placeholder="Nombre" onchange="updateRtnExName('${rid}',${ei},this.value)">
+          <button class="gif-btn" onclick="openGifModal('${(ex.name||'').replace(/'/g,'&#39;')}')">🎬</button>
+          <button class="set-del-btn" onclick="delRtnEx('${rid}','${ex.id}')">🗑</button>
+        </div>
+        <input class="ex-note-inp" type="text" value="${(ex.note||'').replace(/"/g,'&quot;')}" placeholder="Nota técnica..." onchange="updateRtnExNote('${rid}',${ei},this.value)" style="margin:0 16px 6px;display:block;width:calc(100% - 32px)">
+        <div class="sets-table" style="margin:0 16px 6px">
+          <div class="sets-hdr"><span>#</span><span>Peso ref.</span><span>Reps ref.</span><span>Tiempo</span><span></span><span></span></div>
+          <div id="rtns-${rid}-${ex.id}">${setsHtml}</div>
+        </div>
+        <button class="add-set-btn" onclick="addTmplSet('${rid}','${ex.id}')">+ Serie</button>
+      </div>
     </div>
-    <input class="ex-note-inp" type="text" value="${(ex.note||'').replace(/"/g,'&quot;')}" placeholder="Nota técnica..." onchange="updateRtnExNote('${rid}',${ei},this.value)">
-    <div class="sets-table">
-      <div class="sets-hdr"><span>#</span><span>Peso ref.</span><span>Reps ref.</span><span>Tiempo</span><span></span><span></span></div>
-      <div id="rtns-${rid}-${ex.id}">${setsHtml}</div>
-    </div>
-    <button class="add-set-btn" onclick="addTmplSet('${rid}','${ex.id}')">+ Serie</button>
   </div>`;
 }
 
@@ -3726,7 +3891,83 @@ window.runAiPriceUpdate = async () => {
 // ══════════════════════════════════════════════════════
 //  NOTES
 // ══════════════════════════════════════════════════════
-window.saveNotes=()=>{personalNotes=document.getElementById('personal-notes')?.value||'';};
+window.saveNotes=()=>{
+  if(isCoachView()){
+    coachClientNotes.personal = document.getElementById('personal-notes')?.value||'';
+    personalNotes = coachClientNotes.personal;
+  } else {
+    personalNotes = document.getElementById('personal-notes')?.value||'';
+  }
+};
+window.saveCoachNotesField=(field,val)=>{
+  if(!isCoachView()) return;
+  coachClientNotes[field]=val;
+};
+
+function renderNotasPanel(){
+  const coach = isCoachView();
+  const clientName = allClients.find(c=>c.id===currentClientId)?.full_name || 'Cliente';
+  const isSelf = currentClientId === currentUser?.id;
+  const feedbackEscaped = (coachFeedback||'').replace(/</g,'&lt;');
+  const personalEscaped = (coach ? (coachClientNotes.personal||'') : (personalNotes||'')).replace(/</g,'&lt;');
+  const qrEscaped = (coachClientNotes.quickRules||'').replace(/</g,'&lt;');
+  const supEscaped = (coachClientNotes.supplements||'').replace(/</g,'&lt;');
+  const qrDefault = DEFAULT_QUICK_RULES;
+  const supDefault = DEFAULT_SUPPLEMENTS;
+
+  let html = `<div class="sec" style="margin-bottom:12px">\u{1F4DD} NOTAS${coach&&!isSelf?' \u2014 '+clientName:''}</div><div class="notes-grid">`;
+
+  if(coach){
+    html += `
+      <div class="note-card">
+        <h4>\u{1F4A7} Reglas r\u00e1pidas</h4>
+        <textarea style="width:100%;min-height:90px;background:transparent;border:1px dashed var(--border);border-radius:5px;color:var(--text);font-size:11px;line-height:1.6;padding:6px;resize:vertical;font-family:inherit;outline:none;box-sizing:border-box"
+          placeholder="${qrDefault}" oninput="saveCoachNotesField('quickRules',this.value)">${qrEscaped}</textarea>
+      </div>
+      <div class="note-card">
+        <h4>\u{1F3CB} Suplementos</h4>
+        <textarea style="width:100%;min-height:90px;background:transparent;border:1px dashed var(--border);border-radius:5px;color:var(--text);font-size:11px;line-height:1.6;padding:6px;resize:vertical;font-family:inherit;outline:none;box-sizing:border-box"
+          placeholder="${supDefault}" oninput="saveCoachNotesField('supplements',this.value)">${supEscaped}</textarea>
+      </div>
+      <div class="note-card" style="grid-column:span 2">
+        <h4>\u{1F5D2} Notas privadas${isSelf?' personales':' sobre '+clientName} <span style="font-size:9px;color:var(--muted2);font-weight:400">(solo las ves t\u00fa)</span></h4>
+        <textarea id="personal-notes" placeholder="Apuntes privados..." oninput="saveNotes()">${personalEscaped}</textarea>
+        <button class="btn ghost sm" style="margin-top:7px" onclick="saveNotesToServer()">\u{1F4BE} Guardar todo</button>
+      </div>
+      ${!isSelf?`
+      <div class="feedback-card" style="grid-column:span 2;background:var(--card);border:1px solid rgba(242,210,79,.18);border-radius:9px;padding:14px">
+        <h4 style="font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--accent3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">\u{1F468}\u200D\u{1F4BC} Feedback publicado a ${clientName}</h4>
+        <textarea id="coach-feedback-inp" placeholder="Mensaje que ver\u00e1 ${clientName}..." style="min-height:100px;border:1px solid rgba(242,210,79,.15);border-radius:6px;padding:9px;background:rgba(242,210,79,.02)">${feedbackEscaped}</textarea>
+        <button class="btn gold sm" style="margin-top:8px" onclick="saveCoachFeedback()">\u{1F4E4} Publicar al cliente</button>
+      </div>`:''}
+    `;
+  } else {
+    const qrHtml = (coachClientNotes.quickRules||qrDefault).replace(/\n/g,'<br>');
+    const supHtml = (coachClientNotes.supplements||supDefault).replace(/\n/g,'<br>');
+    html += `
+      <div class="note-card"><h4>\u{1F4A7} Reglas r\u00e1pidas</h4><div style="font-size:11px;line-height:1.8;color:var(--muted2)">${qrHtml}</div></div>
+      <div class="note-card"><h4>\u{1F3CB} Suplementos</h4><div style="font-size:11px;line-height:1.8;color:var(--muted2)">${supHtml}</div></div>
+      <div class="note-card" style="grid-column:span 2">
+        <h4>\u{1F4DD} Mis notas personales</h4>
+        <textarea id="personal-notes" placeholder="A\u00f1ade tus notas..." oninput="saveNotes()">${personalEscaped}</textarea>
+        <button class="btn ghost sm" style="margin-top:7px" onclick="saveNotesToServer()">\u{1F4BE} Guardar</button>
+      </div>
+      <div class="feedback-published" style="grid-column:span 2;background:var(--card);border:1px solid rgba(100,220,200,.15);border-radius:9px;padding:14px">
+        <h4 style="font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--accent2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">\u{1F4E8} Mensaje de tu entrenador</h4>
+        <div id="published-feedback-text" style="font-size:12px;line-height:1.7;color:var(--muted2);white-space:pre-wrap">${feedbackEscaped||'Tu entrenador a\u00fan no ha dejado ning\u00fan mensaje.'}</div>
+      </div>
+      <div class="note-card" style="grid-column:span 2">
+        <h4>\u{1F511} Cambiar contrase\u00f1a</h4>
+        <p style="font-size:11px;color:var(--muted2);margin:0 0 10px">Cambia tu contrase\u00f1a de acceso a la app.</p>
+        <button class="btn ghost sm" onclick="openChangePassModal()">\u{1F511} Cambiar contrase\u00f1a</button>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  const nc = document.getElementById('notas-content');
+  if(nc) nc.innerHTML = html;
+}
 window.saveNotesToServer=saveNotesToServer;
 window.saveCoachFeedback=saveCoachFeedback;
 
@@ -4011,13 +4252,12 @@ function showTab(name){
   if(name==='progreso'){loadProgressFromServer().then(()=>{initProgressForm();renderProgress();});}
   if(name==='ejercicios')renderExList();
   if(name==='notas'){
-    setTimeout(()=>{
-      const pn=document.getElementById('personal-notes');if(pn)pn.value=personalNotes;
-      if(isCoachView()){
-        const cfa=document.querySelector('.coach-feedback-area');
-        if(cfa) cfa.style.display='block';
-      }
-    },0);
+    renderNotasPanel();
+  }
+  if(name==='chat'){
+    stopChatPolling();
+    chatMessages=[];
+    loadChat().then(()=>startChatPolling());
   }
   if(name==='perfil') initProfilePanel();
 }
@@ -4629,12 +4869,77 @@ function initProfilePanel(){
   // Restore avatar
   const savedUrl = localStorage.getItem('nc_avatar_'+currentUser.id);
   if(savedUrl) applyAvatar(savedUrl);
-  // Load weight log
-  try{ weightLog = JSON.parse(localStorage.getItem('nc_weight_'+currentUser.id)||'[]'); }
-  catch(e){ weightLog=[]; }
-  renderWeightLog();
-  // Load progress
-  loadProgressFromServer().then(()=>{ initProgressForm(); renderProgress(); });
+
+  const isSelf = currentClientId === currentUser?.id;
+  const clientCard = document.getElementById('client-profile-card');
+
+  if(isCoachView() && !isSelf){
+    // Coach viendo un cliente → mostrar panel del cliente, ocultar su propio peso/progreso
+    const ownSection = document.querySelector('#panel-perfil > div[style*="grid-template-columns:340px"]');
+    if(ownSection) ownSection.style.display = 'none';
+    if(clientCard) clientCard.style.display = 'block';
+
+    const client = allClients.find(c=>c.id===currentClientId);
+    const cName = client?.full_name || client?.email || '—';
+
+    const nm  = document.getElementById('client-profile-name');   if(nm)  nm.textContent  = cName;
+    const fn  = document.getElementById('client-profile-fullname'); if(fn) fn.textContent = cName;
+    const em  = document.getElementById('client-profile-email');  if(em)  em.textContent  = client?.email || '—';
+    const av  = document.getElementById('client-profile-avatar'); if(av)  av.textContent  = (cName[0]||'?').toUpperCase();
+    const pn  = document.getElementById('client-personal-notes-view');
+    if(pn) pn.textContent = coachClientNotes.personal || personalNotes || 'Sin notas.';
+    const cf  = document.getElementById('client-coach-feedback-view');
+    if(cf) cf.textContent = coachFeedback || 'Sin feedback publicado.';
+
+    // Renderizar peso del cliente
+    try{ weightLog = JSON.parse(localStorage.getItem('nc_weight_'+currentClientId)||'[]'); }
+    catch(e){ weightLog=[]; }
+    renderClientWeightChart();
+
+    // Cargar progreso del cliente
+    loadProgressFromServer().then(()=>{ initProgressForm(); renderProgress(); });
+  } else {
+    // Coach viéndose a sí mismo o es cliente
+    if(clientCard) clientCard.style.display = 'none';
+    const ownSection = document.querySelector('#panel-perfil > div[style*="grid-template-columns:340px"]');
+    if(ownSection) ownSection.style.display = '';
+    try{ weightLog = JSON.parse(localStorage.getItem('nc_weight_'+currentUser.id)||'[]'); }
+    catch(e){ weightLog=[]; }
+    renderWeightLog();
+    loadProgressFromServer().then(()=>{ initProgressForm(); renderProgress(); });
+  }
+}
+
+function renderClientWeightChart(){
+  const chart = document.getElementById('client-weight-chart');
+  const list  = document.getElementById('client-weight-list');
+  if(!chart) return;
+  if(!weightLog.length){
+    chart.innerHTML=`<div style="color:var(--muted2);font-size:10px;text-align:center;width:100%;padding:6px">Sin registros</div>`;
+    if(list) list.innerHTML=''; return;
+  }
+  const recent = weightLog.slice(-20);
+  const min = Math.min(...recent.map(e=>e.w))-0.5;
+  const max = Math.max(...recent.map(e=>e.w))+0.5;
+  const range = max-min||1;
+  chart.innerHTML = recent.map(e=>{
+    const pct = Math.round(((e.w-min)/range)*90);
+    const d   = e.date.slice(5);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:18px">
+      <span style="font-size:7px;color:var(--accent);font-weight:700">${e.w}</span>
+      <div style="width:100%;background:var(--border);border-radius:2px;height:50px;display:flex;align-items:flex-end">
+        <div style="width:100%;height:${pct}%;background:var(--accent2);border-radius:2px"></div>
+      </div>
+      <span style="font-size:6px;color:var(--muted2)">${d}</span>
+    </div>`;
+  }).join('');
+  if(list) list.innerHTML = [...weightLog].reverse().slice(0,6).map(e=>{
+    const d = new Date(e.date+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'});
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:var(--bg2);border-radius:5px">
+      <span style="color:var(--muted2);font-size:10px">${d}</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);font-size:13px">${e.w} kg</span>
+    </div>`;
+  }).join('');
 }
 
 function applyAvatar(url){
@@ -4755,6 +5060,123 @@ function renderWeightLog(){
     </div>`;
   }).join('');
 }
+
+// ══════════════════════════════════════════════════════
+//  💬 CHAT
+// ══════════════════════════════════════════════════════
+let chatMessages = [];
+let chatPollingInterval = null;
+let lastChatMsgId = null;
+
+function getChatLabel(){
+  if(isCoachView()){
+    const isSelf = currentClientId === currentUser.id;
+    if(isSelf) return 'Tú mismo';
+    return allClients.find(c=>c.id===currentClientId)?.full_name || 'Cliente';
+  }
+  return 'Tu entrenador';
+}
+
+async function loadChat(){
+  if(!currentClientId) return;
+  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+  if(!coachId) return;
+  const { data, error } = await sb
+    .from('client_messages')
+    .select('*')
+    .eq('client_id', currentClientId)
+    .eq('coach_id', coachId)
+    .order('created_at', { ascending: true })
+    .limit(200);
+  if(error){ console.warn('chat load error', error.message); return; }
+  chatMessages = data || [];
+  lastChatMsgId = chatMessages.length ? chatMessages[chatMessages.length-1].id : null;
+  renderChat();
+}
+
+async function pollNewMessages(){
+  if(!currentClientId) return;
+  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+  if(!coachId) return;
+  let query = sb.from('client_messages').select('*')
+    .eq('client_id', currentClientId)
+    .eq('coach_id', coachId)
+    .order('created_at', { ascending: true });
+  if(lastChatMsgId) query = query.gt('id', lastChatMsgId);
+  const { data } = await query.limit(50);
+  if(data && data.length){
+    chatMessages = chatMessages.concat(data);
+    lastChatMsgId = chatMessages[chatMessages.length-1].id;
+    renderChat();
+  }
+}
+
+function startChatPolling(){
+  stopChatPolling();
+  chatPollingInterval = setInterval(pollNewMessages, 4000);
+}
+function stopChatPolling(){
+  if(chatPollingInterval){ clearInterval(chatPollingInterval); chatPollingInterval=null; }
+}
+
+function renderChat(){
+  const container = document.getElementById('chat-messages');
+  if(!container) return;
+  const label = document.getElementById('chat-with-label');
+  if(label) label.textContent = getChatLabel();
+
+  if(!chatMessages.length){
+    container.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted2)">
+      <div style="font-size:36px">💬</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700">Sin mensajes aún</div>
+      <div style="font-size:11px">Empieza la conversación 👇</div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let lastDate = '';
+  chatMessages.forEach(msg => {
+    const dt = new Date(msg.created_at);
+    const dateStr = dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+    if(dateStr !== lastDate){
+      html += `<div class="chat-day-sep">${dateStr}</div>`;
+      lastDate = dateStr;
+    }
+    const mine = msg.sender_id === currentUser.id;
+    const timeStr = dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const senderLabel = msg.sender_role==='coach' ? '👨‍💼 Entrenador' : '🧑 '+( allClients.find(c=>c.id===msg.sender_id)?.full_name || 'Cliente');
+    html += `<div style="display:flex;flex-direction:column;align-self:${mine?'flex-end':'flex-start'};max-width:72%">
+      ${!mine&&isCoachView()?`<div class="chat-meta" style="padding-left:4px;margin-bottom:2px">${senderLabel}</div>`:''}
+      <div class="chat-bubble ${mine?'mine':'theirs'}">${msg.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      <div class="chat-meta">${timeStr}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+window.sendChatMessage = async () => {
+  const inp = document.getElementById('chat-input');
+  const text = inp?.value?.trim();
+  if(!text || !currentClientId) return;
+  const coachId = currentProfile.role==='coach' ? currentUser.id : currentProfile.coach_id;
+  if(!coachId) return;
+  inp.value = '';
+  const msg = {
+    client_id: currentClientId,
+    coach_id: coachId,
+    sender_id: currentUser.id,
+    sender_role: currentProfile.role,
+    message: text,
+    created_at: new Date().toISOString()
+  };
+  const { data, error } = await sb.from('client_messages').insert(msg).select().single();
+  if(error){ toast('Error enviando mensaje: '+error.message); inp.value=text; return; }
+  chatMessages.push(data);
+  lastChatMsgId = data.id;
+  renderChat();
+};
 
 // ── BOOT ──
 document.getElementById('gif-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeGifModal(); });
