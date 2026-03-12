@@ -1412,32 +1412,7 @@ create policy "client_rw" on public.client_messages
             <div style="font-size:10px;color:var(--muted2)">Se guardan cifradas en Supabase. Solo el entrenador puede verlas.</div>
           </div>
         </div>
-        <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
-
-          <!-- Supabase Service Role Key -->
-          <div>
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-              <span style="font-size:14px">🗄</span>
-              <div style="flex:1">
-                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px">Supabase Service Role Key</div>
-                <div style="font-size:10px;color:var(--muted2)">Para crear cuentas de clientes. Supabase → Settings → API → <code style="background:var(--card2);padding:1px 4px;border-radius:3px">service_role</code></div>
-              </div>
-              <div id="sb-key-status" style="font-size:10px;font-family:'Syne',sans-serif;font-weight:700;color:var(--muted2);white-space:nowrap">—</div>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <input id="inp-sb-service-key" type="password" placeholder="eyJhbGci..." autocomplete="new-password"
-                style="flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .15s"
-                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-              <button class="btn ghost sm" onclick="toggleKeyVisibility('inp-sb-service-key')" title="Mostrar/ocultar" style="flex-shrink:0">👁</button>
-              <button class="btn sm" onclick="saveApiKey('supabase_service_key','inp-sb-service-key','sb-key-status')" style="flex-shrink:0">💾 Guardar</button>
-            </div>
-            <div style="margin-top:5px;display:flex;gap:5px;align-items:center">
-              <button class="btn ghost sm" onclick="editApiKey('inp-sb-service-key','supabase_service_key')" id="btn-edit-sb" style="display:none;font-size:10px">✏ Modificar clave actual</button>
-              <button class="btn danger sm" onclick="deleteApiKey('supabase_service_key','sb-key-status','btn-edit-sb','inp-sb-service-key')" id="btn-del-sb" style="display:none;font-size:10px">🗑 Borrar</button>
-            </div>
-          </div>
-
-          <div style="height:1px;background:var(--border)"></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
 
           <!-- Claude / Anthropic API Key -->
           <div>
@@ -1471,7 +1446,7 @@ create policy "client_rw" on public.client_messages
           <span style="font-size:16px">👥</span>
           <div>
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">Gestión de clientes</div>
-            <div style="font-size:10px;color:var(--muted2)">Crea cuentas para tus clientes. Necesitas la Supabase Service Role Key.</div>
+            <div style="font-size:10px;color:var(--muted2)">Crea cuentas para tus clientes.</div>
           </div>
         </div>
         <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
@@ -3665,7 +3640,6 @@ async function loadApiKeys() {
 }
 
 function _syncKeyStatuses() {
-  _syncOneKey('sb-key-status', 'inp-sb-service-key', 'btn-edit-sb', 'btn-del-sb', _apiKeys.supabase_service_key);
   _syncOneKey('claude-key-status', 'inp-claude-key', 'btn-edit-claude', 'btn-del-claude', _apiKeys.anthropic_key);
   const lastEl = document.getElementById('price-update-status');
   if (lastEl && _apiKeys.last_price_update) {

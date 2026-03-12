@@ -13,6 +13,11 @@ TODO
 -DONE Buscar el ejercicio desde entreno para el ejercicio
 -DONE Rutina y ejercicios no guardandose
 -DONE Base de datos de rutinas por default y que cada dia se pueda modificar el entrenamiento
+-Entrenador no tiene mi perfil
+-Actualizar la pantalla directamente al cargar el cliente
+-Mejorar como se ve el chat
+-Que el cliente pueda meter su progreso
+-Chat que se manden las fotos
 -Mejorar seguridad
 -cambiar direccion y applicacion
 
